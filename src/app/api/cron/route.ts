@@ -1,45 +1,59 @@
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { kv } from '@vercel/kv';
+import { supabase } from '@/lib/supabase';
 
-// 配置 VAPID 密钥，必须与前端公钥匹配
 webpush.setVapidDetails(
-  'mailto:support@lifecanvas.example.com', // 替换为真实的维护邮箱
+  'mailto:support@lifecanvas.example.com',
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string,
   process.env.VAPID_PRIVATE_KEY as string
 );
 
-// 强制 Vercel 进行无缓存的动态处理
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // 安全校验：Vercel Cron 会携带特定的 Bearer Token
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // 假设所有的 userId 保存在一个集合中
-    const userIds = await kv.smembers('users');
+    // 从 Supabase 查询所有用户的推送信标
+    const { data: pushSubs, error: pushError } = await supabase
+      .from('user_state')
+      .select('user_id, value')
+      .eq('key', 'pushSub');
+
+    if (pushError) throw pushError;
 
     let pushedCount = 0;
 
-    for (const userId of userIds) {
-      // 提取用户的订阅配置、数据与 PushSubscription
-      const [pushSub, subscriptions, rituals] = await Promise.all([
-        kv.get(`user:${userId}:pushSub`),
-        kv.get(`user:${userId}:subscriptions`),
-        kv.get(`user:${userId}:rituals`),
-      ]);
-
+    for (const subRow of pushSubs) {
+      const userId = subRow.user_id;
+      const pushSub = subRow.value;
       if (!pushSub) continue;
+
+      // 并发查询该用户的 habits 和 subscriptions
+      const { data: userStates, error: stateError } = await supabase
+        .from('user_state')
+        .select('key, value')
+        .eq('user_id', userId)
+        .in('key', ['subscriptions', 'rituals']);
+
+      if (stateError) continue;
+
+      let subscriptions: any[] = [];
+      let rituals: any[] = [];
+
+      userStates.forEach(row => {
+        if (row.key === 'subscriptions') subscriptions = row.value || [];
+        if (row.key === 'rituals') rituals = row.value || [];
+      });
 
       const notificationsToSend: string[] = [];
       const now = new Date();
       now.setHours(0, 0, 0, 0);
 
-      // 1. 检查订阅是否即将过期 (3天内)
+      // 1. 检查订阅
       if (Array.isArray(subscriptions)) {
         subscriptions.forEach((sub: any) => {
           if (sub.expiry) {
@@ -52,7 +66,7 @@ export async function GET(request: Request) {
         });
       }
 
-      // 2. 检查习惯 (Rituals) 每日打卡状态
+      // 2. 检查习惯
       if (Array.isArray(rituals)) {
         let uncompletedRituals = 0;
         rituals.forEach((ritual: any) => {
@@ -78,8 +92,7 @@ export async function GET(request: Request) {
           pushedCount++;
         } catch (error: any) {
           if (error.statusCode === 410 || error.statusCode === 404) {
-            // 订阅已失效或退订，清理 KV
-            await kv.del(`user:${userId}:pushSub`);
+            await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
           } else {
             console.error(`Push failed for user ${userId}:`, error);
           }

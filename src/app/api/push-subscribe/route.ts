@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { supabase } from '@/lib/supabase';
 
-// 模拟的用户ID，与之前的保持一致
 const USER_ID = 'demo_user_001';
 
 export async function POST(request: Request) {
@@ -12,13 +11,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid subscription' }, { status: 400 });
     }
 
-    // 存入 Vercel KV 数据库
-    await kv.set(`user:${USER_ID}:pushSub`, subscription);
-    
-    // 顺手将当前用户加入待遍历列表（Cron 定时任务需要用到）
-    await kv.sadd('users', USER_ID);
+    const { error } = await supabase
+      .from('user_state')
+      .upsert(
+        { user_id: USER_ID, key: 'pushSub', value: subscription },
+        { onConflict: 'user_id,key' }
+      );
 
-    return NextResponse.json({ success: true, message: 'Subscription saved to KV' });
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, message: 'Subscription saved to Supabase' });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
