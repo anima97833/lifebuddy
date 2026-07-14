@@ -10,6 +10,13 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "LifeCanvas",
   description: "A minimal life dashboard",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LifeCanvas",
+  },
+  themeColor: "#F2EFE9",
 };
 
 export default function RootLayout({
