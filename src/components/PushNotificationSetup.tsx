@@ -87,12 +87,44 @@ export function PushNotificationSetup() {
     }
   };
 
+  const handleTestPush = async () => {
+    setIsSubscribing(true);
+    try {
+      const res = await fetch('/api/test-push', { method: 'POST' });
+      const data = await res.json();
+      if (!data.success) {
+        alert('测试失败: ' + data.error);
+      } else {
+        console.log('测试通知已发出！');
+      }
+    } catch (err: any) {
+      alert('测试请求失败: ' + err.message);
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
   const handleDismiss = () => {
     setShowPrompt(false);
     // 可以在这里把用户的“拒绝”存入 localStorage，以免以后反复弹窗
   };
 
-  if (!showPrompt) return null;
+  if (!showPrompt) {
+    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
+      return (
+        <button 
+          onClick={handleTestPush}
+          disabled={isSubscribing}
+          className="fixed bottom-4 right-4 z-[9999] p-3 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center group"
+          title="测试云端推送链路"
+        >
+          <span className="material-symbols-outlined text-[20px] group-hover:animate-ping absolute opacity-0 group-hover:opacity-30">notifications_active</span>
+          <span className="material-symbols-outlined text-[20px] relative z-10">send</span>
+        </button>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-md">
