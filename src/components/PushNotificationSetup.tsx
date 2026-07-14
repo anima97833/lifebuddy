@@ -29,48 +29,59 @@ export function PushNotificationSetup() {
   }, []);
 
   const handleSubscribe = async () => {
+    console.log('[PushSetup] 1. 开始订阅流程');
     setIsSubscribing(true);
     try {
-      // 1. 请求系统通知权限
+      console.log('[PushSetup] 2. 请求系统通知权限...');
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        console.warn('通知权限被拒绝');
-        setShowPrompt(false);
-        return;
-      }
-
-      // 2. 注册 Service Worker
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log(`[PushSetup] 3. 通知权限结果: ${permission}`);
       
-      // 等待 service worker 处于 active 状态
-      await navigator.serviceWorker.ready;
-
-      // 3. 通过 VAPID 公钥向浏览器的推送服务订阅
-      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!publicVapidKey) {
-        console.warn('尚未配置 NEXT_PUBLIC_VAPID_PUBLIC_KEY 环境变量');
+      if (permission !== 'granted') {
+        console.warn('[PushSetup] 通知权限被拒绝或忽略');
         setShowPrompt(false);
         return;
       }
 
+      console.log('[PushSetup] 4. 开始注册 Service Worker (/sw.js)...');
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('[PushSetup] 5. Service Worker 注册成功:', registration);
+      
+      console.log('[PushSetup] 6. 等待 Service Worker 处于 active 状态...');
+      await navigator.serviceWorker.ready;
+      console.log('[PushSetup] 7. Service Worker 已 ready');
+
+      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      console.log('[PushSetup] 8. 获取到的 VAPID 公钥:', publicVapidKey ? '存在' : '缺失 (undefined)');
+      
+      if (!publicVapidKey) {
+        console.warn('[PushSetup] 尚未配置 NEXT_PUBLIC_VAPID_PUBLIC_KEY 环境变量');
+        setShowPrompt(false);
+        return;
+      }
+
+      console.log('[PushSetup] 9. 向浏览器 PushManager 发起订阅请求...');
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
+      console.log('[PushSetup] 10. 获取到 Push Subscription 对象:', subscription);
 
-      // 4. 把生成的 Subscription 对象发给我们的 Vercel KV 后端
-      await fetch('/api/push-subscribe', {
+      console.log('[PushSetup] 11. 将 Subscription 发送至后端...');
+      const response = await fetch('/api/push-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(subscription)
       });
+      
+      const result = await response.json();
+      console.log('[PushSetup] 12. 后端响应:', result);
 
-      console.log('推送订阅成功，已同步至后端!');
+      console.log('[PushSetup] 推送订阅成功，已同步至后端!');
       setShowPrompt(false);
     } catch (err) {
-      console.error('订阅推送失败:', err);
+      console.error('[PushSetup] 订阅推送失败:', err);
     } finally {
       setIsSubscribing(false);
     }
