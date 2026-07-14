@@ -54,13 +54,19 @@ export async function GET(request: Request) {
       });
 
       const notificationsToSend: string[] = [];
-      const now = new Date();
-      const todayStr = now.toLocaleDateString();
+      
+      // ✅ 修复时区 Bug：将服务器 UTC 时间转换为北京时间 (UTC+8)
+      const nowUTC = new Date();
+      const beijingOffset = 8 * 60; // 北京时间 UTC+8，偏移 480 分钟
+      const now = new Date(nowUTC.getTime() + beijingOffset * 60 * 1000);
+      
+      // 用北京时间生成今天的日期字符串 (YYYY-MM-DD)
+      const todayStr = now.toISOString().slice(0, 10);
       
       // 解析用户设定的提醒时间 (格式如 "23:23")
       const [targetHour, targetMinute] = notificationTime.split(':').map(Number);
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
+      const currentHour = now.getUTCHours(); // 此时 now 已经是北京时间，用 getUTCHours() 读取
+      const currentMinute = now.getUTCMinutes();
       
       // 如果还没到设定的时间，或者今天已经推过了，则跳过该用户
       const isTimePassed = currentHour > targetHour || (currentHour === targetHour && currentMinute >= targetMinute);
@@ -68,7 +74,8 @@ export async function GET(request: Request) {
         continue;
       }
 
-      now.setHours(0, 0, 0, 0);
+      const nowMidnight = new Date(now);
+      nowMidnight.setUTCHours(0, 0, 0, 0);
 
       // 1. 检查订阅
       if (Array.isArray(subscriptions)) {
@@ -88,7 +95,10 @@ export async function GET(request: Request) {
         let uncompletedRituals = 0;
         rituals.forEach((ritual: any) => {
           const lastCheckIn = ritual.lastCheckInDate ? new Date(ritual.lastCheckInDate) : null;
-          if (!lastCheckIn || lastCheckIn.toDateString() !== new Date().toDateString()) {
+          // 用北京时间比较打卡日期
+          const todayBeijing = todayStr;
+          const lastCheckInDate = lastCheckIn ? lastCheckIn.toISOString().slice(0, 10) : null;
+          if (!lastCheckInDate || lastCheckInDate !== todayBeijing) {
             uncompletedRituals++;
           }
         });
@@ -97,28 +107,32 @@ export async function GET(request: Request) {
         }
       }
 
-      // 3. 执行推送
-      if (notificationsToSend.length > 0) {
-        const payload = JSON.stringify({
-          title: 'LifeCanvas 守护预警',
-          body: notificationsToSend.join('\n'),
-        });
+      // ✅ 修复 Bug 2：即使没有待办内容，到时间也发保底问候（确保推送链路通畅）
+      if (notificationsToSend.length === 0) {
+        notificationsToSend.push('嘿，您的 LifeCanvas 守护提醒准时送达！今天一切安好，继续加油 💪');
+      }
 
-        try {
-          await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
-          pushedCount++;
-          
-          // 记录今天已推送，防止重复打扰
-          await supabase.from('user_state').upsert(
-            { user_id: userId, key: 'lastNotifiedDate', value: todayStr },
-            { onConflict: 'user_id,key' }
-          );
-        } catch (error: any) {
-          if (error.statusCode === 410 || error.statusCode === 404) {
-            await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
-          } else {
-            console.error(`Push failed for user ${userId}:`, error);
-          }
+      // 3. 执行推送（必达）
+      const payload = JSON.stringify({
+        title: 'LifeCanvas 守护提醒',
+        body: notificationsToSend.join('\n'),
+      });
+
+      try {
+        await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
+        pushedCount++;
+        
+        // 记录今天已推送，防止重复打扰
+        await supabase.from('user_state').upsert(
+          { user_id: userId, key: 'lastNotifiedDate', value: todayStr },
+          { onConflict: 'user_id,key' }
+        );
+      } catch (error: any) {
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          // 凭证过期，清理无效订阅
+          await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
+        } else {
+          console.error(`Push failed for user ${userId}:`, error);
         }
       }
     }
