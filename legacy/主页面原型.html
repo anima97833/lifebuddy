@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "inverse-surface": "#31312d",
+                  "on-secondary-fixed": "#1f1b13",
+                  "on-background": "#1c1c18",
+                  "secondary": "#645e53",
+                  "primary-fixed": "#ffdad8",
+                  "on-error-container": "#93000a",
+                  "on-tertiary": "#ffffff",
+                  "on-secondary": "#ffffff",
+                  "surface-container-low": "#f6f3ed",
+                  "inverse-on-surface": "#f3f0ea",
+                  "secondary-fixed": "#eae1d3",
+                  "surface-container": "#f0eee8",
+                  "tertiary": "#2f2410",
+                  "on-tertiary-fixed-variant": "#53452f",
+                  "primary-fixed-dim": "#ffb3b0",
+                  "on-primary-container": "#ff7f7c",
+                  "on-tertiary-container": "#b6a387",
+                  "surface": "#fcf9f3",
+                  "on-primary-fixed": "#410006",
+                  "surface-bright": "#fcf9f3",
+                  "surface-container-high": "#ebe8e2",
+                  "surface-tint": "#a43b3b",
+                  "tertiary-fixed": "#f5dfc1",
+                  "primary-container": "#74171c",
+                  "on-tertiary-fixed": "#251a07",
+                  "surface-dim": "#dcdad4",
+                  "secondary-fixed-dim": "#cec5b8",
+                  "background": "#fcf9f3",
+                  "outline": "#8a7170",
+                  "on-primary-fixed-variant": "#842326",
+                  "on-secondary-fixed-variant": "#4b463c",
+                  "on-secondary-container": "#686257",
+                  "surface-variant": "#e5e2dc",
+                  "error": "#ba1a1a",
+                  "on-error": "#ffffff",
+                  "primary": "#54000a",
+                  "secondary-container": "#e7dfd1",
+                  "error-container": "#ffdad6",
+                  "tertiary-container": "#473924",
+                  "inverse-primary": "#ffb3b0",
+                  "surface-container-lowest": "#ffffff",
+                  "on-surface": "#1c1c18",
+                  "outline-variant": "#ddc0be",
+                  "tertiary-fixed-dim": "#d8c3a7",
+                  "on-surface-variant": "#574241",
+                  "surface-container-highest": "#e5e2dc",
+                  "on-primary": "#ffffff"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "tab-width": "48px",
+                  "unit": "8px",
+                  "container-padding": "20px",
+                  "gutter": "16px",
+                  "margin-page": "24px"
+          },
+          "fontFamily": {
+                  "body-md": ["Manrope", "sans-serif"],
+                  "display": ["Manrope", "sans-serif"],
+                  "headline-md": ["Manrope", "sans-serif"],
+                  "headline-lg": ["Manrope", "sans-serif"],
+                  "label-md": ["Manrope", "sans-serif"],
+                  "headline-lg-mobile": ["Manrope", "sans-serif"],
+                  "label-sm": ["Manrope", "sans-serif"],
+                  "body-lg": ["Manrope", "sans-serif"]
+          },
+          "fontSize": {
+                  "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                  "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                  "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                  "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  }catch(_e){}</script><meta charset="utf-8"/></head><body class="bg-background text-on-background font-body-md min-h-screen texture-linen flex overflow-hidden">
+<!-- Navigation Drawer (Vertical Sidebar) -->
+<aside class="fixed left-0 top-0 bottom-0 z-50 flex flex-col justify-center items-center space-y-12 bg-background border-r border-outline-variant/20 w-[48px] md:w-[64px]">
+<!-- Brand Anchor -->
+<div class="absolute top-8 left-1/2 -translate-x-1/2 text-primary font-bold font-headline-lg-mobile text-headline-lg-mobile">LD</div>
+<!-- Vertical Tabs Container -->
+<nav class="flex flex-col items-center w-full space-y-12">
+<!-- Active Tab: Todo (Maps to Dashboard/Home intent) -->
+<a class="group relative flex items-center justify-center -rotate-90 origin-center bg-surface-container-highest text-on-surface font-bold rounded-t-xl py-4 px-8 transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined absolute -left-6 rotate-90 text-[18px]" data-original-icon="check_circle">check_circle</span>
+<span class="font-label-md text-label-md">待办</span>
+</a>
+<!-- Inactive Tabs -->
+<a class="group flex items-center justify-center -rotate-90 origin-center text-on-surface-variant/70 py-4 px-8 hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined absolute -left-6 rotate-90 text-[18px]">repeat</span>
+<span class="font-label-md text-label-md">习惯</span>
+</a>
+<a class="group flex items-center justify-center -rotate-90 origin-center text-on-surface-variant/70 py-4 px-8 hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined absolute -left-6 rotate-90 text-[18px]">calendar_month</span>
+<span class="font-label-md text-label-md">事件</span>
+</a>
+<a class="group flex items-center justify-center -rotate-90 origin-center text-on-surface-variant/70 py-4 px-8 hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined absolute -left-6 rotate-90 text-[18px]">trending_up</span>
+<span class="font-label-md text-label-md">成长</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-[48px] md:ml-[64px] h-screen overflow-y-auto texture-cotton">
+<!-- Top Bar -->
+<header class="flex justify-between items-center w-full px-10 h-16 sticky top-0 bg-surface/80 backdrop-blur-sm z-40">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant">menu</span>
+<h1 class="font-headline-md text-headline-md font-semibold text-primary">控制台</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant/10">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm">实时同步</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">calendar_today</span>
+</div>
+</header>
+<!-- Page Content -->
+<div class="px-10 py-8 max-w-7xl mx-auto space-y-12">
+<!-- Intro Section -->
+<section class="flex flex-col md:flex-row justify-between items-end gap-6">
+<div class="space-y-1">
+<span class="font-label-md text-label-md text-secondary uppercase tracking-widest">月度概览</span>
+<h2 class="font-display text-display text-primary">八月报告</h2>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant/70">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+<span class="font-label-sm text-label-sm">待办</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary-container"></div>
+<span class="font-label-sm text-label-sm">习惯</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Dashboard -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+<!-- Job Search Board (Span 8) -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 soft-shadow border border-outline-variant/10">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline-md text-headline-md text-primary">求职看板</h3>
+<button class="bg-primary-container text-white px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary transition-all">新增申请</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-separate border-spacing-y-4">
+<thead>
+<tr class="text-left text-on-surface-variant/60">
+<th class="pb-2 px-4 font-label-sm text-label-sm uppercase tracking-wider">公司</th>
+<th class="pb-2 px-4 font-label-sm text-label-sm uppercase tracking-wider">岗位</th>
+<th class="pb-2 px-4 font-label-sm text-label-sm uppercase tracking-wider">进度</th>
+<th class="pb-2 px-4 font-label-sm text-label-sm uppercase tracking-wider text-right">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr class="bg-surface-container-low/50 hover:bg-surface-container-low transition-colors rounded-lg overflow-hidden group">
+<td class="py-5 px-4 rounded-l-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center font-bold text-primary">V</div>
+<span class="font-headline-md text-headline-md">维兰工作室</span>
+</div>
+</td>
+<td class="py-5 px-4 font-body-md text-on-surface">资深产品设计师</td>
+<td class="py-5 px-4">
+<div class="w-24 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[75%] rounded-full"></div>
+</div>
+</td>
+<td class="py-5 px-4 rounded-r-xl text-right">
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full text-label-sm font-label-sm">复试</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low/50 hover:bg-surface-container-low transition-colors rounded-lg overflow-hidden group">
+<td class="py-5 px-4 rounded-l-xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center font-bold text-primary">K</div>
+<span class="font-headline-md text-headline-md">Kinfolk</span>
+</div>
+</td>
+<td class="py-5 px-4 font-body-md text-on-surface">艺术总监</td>
+<td class="py-5 px-4">
+<div class="w-24 h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[40%] rounded-full"></div>
+</div>
+</td>
+<td class="py-5 px-4 rounded-r-xl text-right">
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant rounded-full text-label-sm font-label-sm">已投递</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Subscription Guard (Span 4) -->
+<div class="md:col-span-4 space-y-6">
+<div class="bg-primary-container p-8 rounded-xl soft-shadow text-white relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]">account_balance_wallet</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">订阅守卫</h3>
+<p class="font-label-sm text-label-sm text-white/70 mb-6 uppercase tracking-wider">未来30天: $42.00</p>
+<div class="space-y-4">
+<div class="flex justify-between items-center bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">play_circle</span>
+<div>
+<p class="font-headline-md text-label-md">Netflix</p>
+<p class="text-[10px] text-white/60">按月 • 到期 8月28日</p>
+</div>
+</div>
+<span class="font-headline-md text-headline-md">$15.99</span>
+</div>
+<div class="flex justify-between items-center bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined">music_note</span>
+<div>
+<p class="font-headline-md text-label-md">Spotify</p>
+<p class="text-[10px] text-white/60">按年 • 到期 9月12日</p>
+</div>
+</div>
+<span class="font-headline-md text-headline-md">$9.99</span>
+</div>
+</div>
+</div>
+<!-- Skill Milestones Card -->
+<div class="bg-surface-container-highest p-8 rounded-xl border border-outline-variant/10">
+<h3 class="font-headline-md text-headline-md text-primary mb-6">技能里程碑</h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md">数字插画</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">累计 42h</span>
+</div>
+<div class="w-full h-2 bg-background rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[65%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant/50">上次学习: 2天前</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<span class="font-label-md text-label-md">品牌策略</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant/60">累计 128h</span>
+</div>
+<div class="w-full h-2 bg-background rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[92%]"></div>
+</div>
+<p class="text-[10px] text-on-surface-variant/50">上次学习: 今天</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Habit Tracker (Full Width Below) -->
+<div class="md:col-span-12 bg-white/50 backdrop-blur-lg rounded-xl p-8 border border-outline-variant/10 soft-shadow">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">日常仪式</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant/60">本月达成率: 78%</p>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Habit 1: Reading -->
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container">menu_book</span>
+<span class="font-headline-md text-headline-md">哲学阅读</span>
+</div>
+<span class="font-headline-md text-headline-md text-primary">15/18 <span class="text-on-surface-variant/40 text-label-sm">天</span></span>
+</div>
+<div class="flex flex-wrap gap-2">
+<!-- Dot Grid generation mock -->
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full bg-outline-variant"></div>
+<div class="w-4 h-4 rounded-full border border-outline-variant"></div>
+<div class="w-4 h-4 rounded-full border border-outline-variant"></div>
+<div class="w-4 h-4 rounded-full border border-outline-variant"></div>
+</div>
+</div>
+<!-- Habit 2: Exercise -->
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container">fitness_center</span>
+<span class="font-headline-md text-headline-md">晨间瑜伽</span>
+</div>
+<span class="font-headline-md text-headline-md text-primary">12/18 <span class="text-on-surface-variant/40 text-label-sm">天</span></span>
+</div>
+<div class="flex flex-wrap gap-2">
+<!-- Dot Grid generation mock -->
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full bg-primary-container"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+<div class="w-4 h-4 rounded-full border border-primary-container/30"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Atmospheric Section (Image Reference Inspired) -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-10 py-10 border-t border-outline-variant/10">
+<div class="space-y-6">
+<h4 class="font-headline-lg text-headline-lg text-primary">灵感画布</h4>
+<p class="font-body-lg text-body-lg text-on-surface-variant/70 leading-relaxed">
+            你的空间是专注力的映射。在雄心与宁静之间保持平衡。今天的目标不是完成，而是有意识的进步。
+          </p>
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-fixed">palette</span>
+</div>
+<div>
+<p class="font-headline-md text-label-md">色彩理论项目</p>
+<p class="text-label-sm text-on-surface-variant/50">下次练习: 明天, 9:00 AM</p>
+</div>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute inset-0 bg-primary-container/5 rounded-2xl transform rotate-2 group-hover:rotate-0 transition-transform duration-500"></div>
+<div class="relative h-64 w-full bg-white rounded-2xl overflow-hidden shadow-sm border border-outline-variant/20">
+<img class="w-full h-full object-cover grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-700" data-alt="A serene, minimalist interior study space with unbleached paper journals, a vintage glass inkwell, and a single branch of dried eucalyptus in a ceramic vase. The lighting is soft morning sunlight filtering through linen curtains, casting gentle shadows across a champagne white wooden desk. The aesthetic is tactile and organic, emphasizing high-end stationery and intentional workspace design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSQFCblN9YG6ZaQzxfkwmxIWD3F0pPTVk6Dxex1RdDKwpSLd5iw0UUa30nlhL9bxCFaBDyqhGX6wlz2s7xjP2iTnBxNRfu-M-jfGsRyvtzh4vqYMcvvaY_TxeGWJVangSnYUon_iAQbivyGZG_1h6sm0NA1HtpKy9Tg9tXcmTNMcnk-Q2HwXVlHG1F3PdDiWdW6xrBYnd69HBC70Z1X1DvjKWopJQg1cU_9Sl8kEzumxVJTXWowblS62wR7qXI2WKDstBef2AqZ8ee"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Bottom Margin -->
+<div class="h-24"></div>
+</main>
+<!-- Interactive Logic -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Subtle entrance animations
+      const cards = document.querySelectorAll('.soft-shadow');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 100);
+      });
+
+      // Hover interaction for habit dots
+      const dots = document.querySelectorAll('.w-4.h-4');
+      dots.forEach(dot => {
+        dot.addEventListener('mouseenter', () => {
+          dot.style.transform = 'scale(1.2)';
+          dot.style.transition = 'transform 0.2s ease';
+        });
+        dot.addEventListener('mouseleave', () => {
+          dot.style.transform = 'scale(1)';
+        });
+      });
+    });
+  </script>
+</body></html>

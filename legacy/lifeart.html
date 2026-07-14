@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeCanvas</title>
+
+  <!-- Vue 3 (Composition API) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- LocalForage for IndexedDB -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+  <!-- Google Fonts & Material Symbols from 主页面原型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet"/>
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            muji: {
+              bg: '#F2EFE9',
+              surface: '#E8DFD1',
+              text: '#B8B1A5',
+              accent: '#DCC7AA',
+              alert: '#74171C'
+            },
+            "inverse-surface": "#31312d",
+            "on-secondary-fixed": "#1f1b13",
+            "on-background": "#1c1c18",
+            "secondary": "#645e53",
+            "primary-fixed": "#ffdad8",
+            "on-error-container": "#93000a",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "surface-container-low": "#f6f3ed",
+            "inverse-on-surface": "#f3f0ea",
+            "secondary-fixed": "#eae1d3",
+            "surface-container": "#f0eee8",
+            "tertiary": "#2f2410",
+            "on-tertiary-fixed-variant": "#53452f",
+            "primary-fixed-dim": "#ffb3b0",
+            "on-primary-container": "#ff7f7c",
+            "on-tertiary-container": "#b6a387",
+            "surface": "#fcf9f3",
+            "on-primary-fixed": "#410006",
+            "surface-bright": "#fcf9f3",
+            "surface-container-high": "#ebe8e2",
+            "surface-tint": "#a43b3b",
+            "tertiary-fixed": "#f5dfc1",
+            "primary-container": "#74171c",
+            "on-tertiary-fixed": "#251a07",
+            "surface-dim": "#dcdad4",
+            "secondary-fixed-dim": "#cec5b8",
+            "background": "#fcf9f3",
+            "outline": "#8a7170",
+            "on-primary-fixed-variant": "#842326",
+            "on-secondary-fixed-variant": "#4b463c",
+            "on-secondary-container": "#686257",
+            "surface-variant": "#e5e2dc",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "primary": "#54000a",
+            "secondary-container": "#e7dfd1",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#473924",
+            "inverse-primary": "#ffb3b0",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#1c1c18",
+            "outline-variant": "#ddc0be",
+            "tertiary-fixed-dim": "#d8c3a7",
+            "on-surface-variant": "#574241",
+            "surface-container-highest": "#e5e2dc",
+            "on-primary": "#ffffff"
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+            "body-md": ["Manrope", "sans-serif"],
+            "display": ["Manrope", "sans-serif"],
+            "headline-md": ["Manrope", "sans-serif"],
+            "headline-lg": ["Manrope", "sans-serif"],
+            "label-md": ["Manrope", "sans-serif"],
+            "headline-lg-mobile": ["Manrope", "sans-serif"],
+            "label-sm": ["Manrope", "sans-serif"],
+            "body-lg": ["Manrope", "sans-serif"]
+          },
+          fontSize: {
+            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+            "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+            "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+          },
+          maxWidth: {
+            '5xl': '64rem',
+          },
+          boxShadow: {
+            'muji': '0 8px 30px -4px rgba(184, 177, 165, 0.15), 0 4px 10px -2px rgba(184, 177, 165, 0.05)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Global Vibe CSS -->
+  <style>
+    /* 页面切换动画 */
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .fade-enter-from,
+    .fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    /* 展开收起动画 */
+    .slide-fade-enter-active {
+      transition: all 0.3s ease-out;
+    }
+    .slide-fade-leave-active {
+      transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
+    }
+    .slide-fade-enter-from,
+    .slide-fade-leave-to {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+
+    /* 基础重置与字体抗锯齿优化 */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #F2EFE9; /* fallback */
+    }
+
+    /* 棉麻/亚麻质感全局噪点滤镜 (叠加在顶层且不阻挡点击) */
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      /* Base64 SVG Noise */
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.04;
+    }
+    
+    /* 极简滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #E8DFD1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #DCC7AA;
+    }
+  </style>
+</head>
+
+<body class="bg-muji-bg text-muji-text font-sans min-h-screen selection:bg-muji-accent selection:text-white">
+  
+  <div id="app" class="min-h-screen relative z-10">
+    
+    <!-- 原 lifeart 首页 -->
+    <div v-if="!showDashboard" class="flex flex-col min-h-screen">
+      <!-- 极简 Header -->
+      <header class="w-full pt-16 pb-12 flex justify-center items-center">
+        <h1 class="text-xl font-light tracking-[0.25em] uppercase text-muji-text/80 select-none">
+          {{ appName }}
+        </h1>
+      </header>
+
+      <!-- 主体内容区 -->
+      <main class="flex-grow w-full max-w-5xl mx-auto px-6 pb-20 flex flex-col items-center justify-center">
+        
+        <!-- 测试卡片 (Muji Surface) -->
+        <div class="bg-muji-surface w-full max-w-md rounded-sm p-10 flex flex-col items-center gap-6 shadow-muji border border-muji-bg transition-transform duration-500 hover:-translate-y-1">
+          
+          <!-- 图标 (Icon) -->
+          <div class="p-3 bg-muji-bg rounded-full text-muji-accent shadow-sm">
+            <i data-lucide="leaf" class="w-6 h-6 stroke-[1.5]"></i>
+          </div>
+          
+          <!-- 文本绑定测试 -->
+          <div class="text-center space-y-3">
+            <h2 class="text-lg font-medium text-muji-text tracking-wide">{{ greeting }}</h2>
+            <p class="text-sm leading-relaxed tracking-wider text-muji-text/80">
+              {{ description }}
+            </p>
+          </div>
+
+          <!-- 交互按钮展示色板 -->
+          <div class="mt-4 flex gap-4 w-full">
+            <button @click="enterDashboard" class="flex-1 py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase hover:border-muji-accent hover:text-muji-accent transition-all flex items-center justify-center gap-2">
+              <i data-lucide="layout-dashboard" class="w-4 h-4 stroke-[1.5]"></i>
+              Enter
+            </button>
+            <div class="flex-1 relative group">
+              <input type="time" v-model="alertTime" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="设置打卡提醒时间">
+              <button class="w-full py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase group-hover:border-muji-alert group-hover:text-muji-alert transition-all flex items-center justify-center gap-2 relative z-0">
+                <i data-lucide="bell" class="w-4 h-4 stroke-[1.5]"></i>
+                {{ alertTime || '20:00' }}
+              </button>
+            </div>
+          </div>
+          
+        </div>
+        
+      </main>
+    </div>
+
+    <!-- 主页面原型 (Dashboard) -->
+    <div v-else class="flex min-h-screen bg-background text-on-background font-body-md texture-linen overflow-hidden w-full relative">
+      <!-- Mobile Sidebar Backdrop -->
+      <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/30 z-40 md:hidden"></div>
+      <!-- Navigation Drawer (Vertical Sidebar) -->
+      <aside :class="['fixed left-0 top-0 bottom-0 z-50 flex flex-col justify-center items-center space-y-12 bg-background border-r border-outline-variant/20 w-[64px] transition-transform duration-300 ease-in-out', sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
+        <!-- Brand Anchor / Avatar -->
+        <div class="absolute top-8 left-1/2 -translate-x-1/2 cursor-pointer group" @click="$refs.avatarInput.click()">
+          <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-primary transition-colors pointer-events-none">
+            <img v-if="userAvatar" :src="userAvatar" class="w-full h-full object-cover" alt="User Avatar" />
+            <span v-else class="text-primary font-bold text-[14px]">LD</span>
+          </div>
+          <input type="file" ref="avatarInput" @change="uploadAvatar" accept="image/*" class="hidden" title="更换头像" />
+        </div>
+        <!-- Vertical Tabs Container -->
+        <nav class="flex flex-col items-center w-full space-y-4">
+          <!-- Active Tab: Todo (Maps to Dashboard/Home intent) -->
+          <a @click.prevent="activeTab = 'todo'" :class="['group relative flex flex-col items-center justify-center font-bold rounded-xl py-4 w-full gap-2 transition-all cursor-pointer', activeTab === 'todo' ? 'bg-surface-container-highest text-on-surface active:scale-95' : 'text-on-surface-variant/70 hover:bg-surface-container-low']">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            <span class="font-label-md text-label-md" style="writing-mode: vertical-lr; letter-spacing: 0.2em;">待办</span>
+          </a>
+          <!-- Habit Tab -->
+          <a @click.prevent="activeTab = 'habit'" :class="['group flex flex-col items-center justify-center py-4 w-full gap-2 transition-colors cursor-pointer rounded-xl', activeTab === 'habit' ? 'bg-surface-container-highest text-on-surface font-bold' : 'text-on-surface-variant/70 hover:bg-surface-container-low']">
+            <span class="material-symbols-outlined text-[18px]">repeat</span>
+            <span class="font-label-md text-label-md" style="writing-mode: vertical-lr; letter-spacing: 0.2em;">习惯</span>
+          </a>
+          <!-- Event Tab -->
+          <a @click.prevent="activeTab = 'event'" :class="['group flex flex-col items-center justify-center py-4 w-full gap-2 transition-colors cursor-pointer rounded-xl', activeTab === 'event' ? 'bg-surface-container-highest text-on-surface font-bold' : 'text-on-surface-variant/70 hover:bg-surface-container-low']">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            <span class="font-label-md text-label-md" style="writing-mode: vertical-lr; letter-spacing: 0.2em;">事件</span>
+          </a>
+          <!-- Growth Tab -->
+          <a @click.prevent="activeTab = 'growth'" :class="['group flex flex-col items-center justify-center py-4 w-full gap-2 transition-colors cursor-pointer rounded-xl', activeTab === 'growth' ? 'bg-surface-container-highest text-on-surface font-bold' : 'text-on-surface-variant/70 hover:bg-surface-container-low']">
+            <span class="material-symbols-outlined text-[18px]">trending_up</span>
+            <span class="font-label-md text-label-md" style="writing-mode: vertical-lr; letter-spacing: 0.2em;">成长</span>
+          </a>
+        </nav>
+          <!-- Collapse / Hide Button -->
+          <button @click="sidebarOpen = false" class="absolute bottom-6 left-1/2 -translate-x-1/2 p-1.5 rounded-lg text-on-surface-variant/50 hover:text-primary hover:bg-surface-container-low transition-colors md:flex hidden" title="收起侧边栏">
+            <span class="material-symbols-outlined text-[18px]">left_panel_close</span>
+          </button>
+        </aside>
+      
+      <!-- Main Content Canvas -->
+      <main :class="['flex-1 h-screen overflow-y-auto texture-cotton w-full transition-all duration-300 ease-in-out', sidebarOpen ? 'md:ml-[64px]' : 'ml-0']">
+        <!-- Top Bar -->
+        <header class="flex justify-between items-center w-full px-10 h-16 sticky top-0 bg-surface/80 backdrop-blur-sm z-40">
+          <div class="flex items-center gap-2 md:gap-4">
+            <!-- Mobile sidebar toggle -->
+            <button @click="sidebarOpen = !sidebarOpen" class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" title="导航">
+              <span class="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+            <span class="material-symbols-outlined text-on-surface-variant cursor-pointer hidden md:inline" @click="showDashboard = false">arrow_back</span>
+            <h1 class="font-headline-md text-headline-md font-semibold text-primary cursor-pointer hover:opacity-80 transition-opacity" @click="showDashboard = false">返回</h1>
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant/10">
+              <div class="w-2 h-2 rounded-full bg-primary"></div>
+              <span class="font-label-sm text-label-sm">实时同步</span>
+            </div>
+            <div class="flex gap-4">
+              <button @click="exportData" class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <span class="material-symbols-outlined text-[18px]">download</span>导出
+              </button>
+              <div class="relative flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors text-sm font-medium cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">upload</span>导入
+                <input type="file" @change="handleImport" accept=".json" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="导入数据" />
+              </div>
+            </div>
+          </div>
+        </header>
+        
+        <!-- Page Content -->
+        <div class="px-4 md:px-10 py-8 max-w-7xl mx-auto space-y-12">
+          
+          <transition name="fade" mode="out-in">
+            <div :key="activeTab" class="w-full">
+              
+              <!-- 待办: 日常仪式 -->
+              <div v-if="activeTab === 'todo'" class="space-y-12">
+                <!-- Habit Tracker -->
+                <div class="bg-white/50 backdrop-blur-lg rounded-xl p-8 border border-outline-variant/10 soft-shadow">
+                  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-headline-md text-headline-md text-primary">日常仪式</h3>
+                      <button @click="addRitual" class="p-1 rounded-lg bg-primary-container/10 hover:bg-primary-container/20 text-primary transition-colors flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                      </button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <p class="font-label-sm text-label-sm text-on-surface-variant/60">本月达成率: {{ Math.round((rituals.reduce((acc, r) => acc + Number(r.completed), 0) / rituals.reduce((acc, r) => acc + Number(r.target), 0)) * 100) || 0 }}%</p>
+                      <div class="flex gap-2">
+                        <button v-if="totalRitualPages > 1" @click="prevRitualPage" :disabled="ritualPage === 0" class="p-2 hover:bg-surface-container-low rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <button v-if="totalRitualPages > 1" @click="nextRitualPage" :disabled="ritualPage === totalRitualPages - 1" class="p-2 hover:bg-surface-container-low rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                          <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div v-for="(ritual, index) in paginatedRituals" :key="ritualPage * 4 + index" class="space-y-6 relative group">
+                      <button @click="removeRitual(ritualPage * 4 + index)" class="absolute -left-6 lg:-left-8 top-0 p-1 opacity-0 group-hover:opacity-100 text-error hover:bg-error-container rounded transition-all">
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                      <div class="flex flex-col md:flex-row justify-between md:items-center gap-3 md:gap-0">
+                        <div class="flex items-center gap-3">
+                          <span class="material-symbols-outlined text-primary-container">{{ ritual.icon }}</span>
+                          <input v-model="ritual.name" class="font-headline-md text-headline-md bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-full md:w-32 transition-colors placeholder:text-on-surface-variant/40" placeholder="仪式名称">
+                        </div>
+                        <div class="flex items-center gap-2 self-end md:self-auto">
+                          <div class="flex items-center font-headline-md text-headline-md text-primary">
+                            <span class="w-8 text-right">{{ ritual.completed }}</span>
+                            <span class="mx-1">/</span>
+                            <input v-model.number="ritual.target" type="number" min="1" class="w-10 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none transition-colors">
+                            <span class="text-on-surface-variant/40 text-label-sm ml-1">天</span>
+                          </div>
+                          <button @click="checkInRitual(ritualPage * 4 + index)" 
+                                  :disabled="ritual.lastCheckInDate === new Date().toLocaleDateString() || ritual.completed >= ritual.target"
+                                  class="ml-2 px-3 py-1 rounded-full text-[12px] font-medium transition-all flex-shrink-0"
+                                  :class="ritual.lastCheckInDate === new Date().toLocaleDateString() ? 'bg-surface-container-highest text-on-surface-variant/50 cursor-not-allowed' : 'bg-primary text-on-primary hover:opacity-90 active:scale-95 shadow-sm'">
+                            {{ ritual.lastCheckInDate === new Date().toLocaleDateString() ? '今日已打卡' : '今日打卡' }}
+                          </button>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-2">
+                        <div v-for="n in (ritual.target || 0)" :key="n" 
+                             class="w-4 h-4 rounded-full dot-anim transition-colors"
+                             :class="n <= (ritual.completed || 0) ? (ritual.color === 'primary' ? 'bg-primary-container' : 'bg-outline-variant') : (ritual.color === 'primary' ? 'border border-primary-container/30' : 'border border-outline-variant')">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 习惯: 技能里程碑和技能项目 -->
+              <div v-if="activeTab === 'habit'" class="space-y-6">
+                <!-- Skill Milestones Card -->
+                <div class="bg-surface-container-highest p-8 rounded-xl border border-outline-variant/10 soft-shadow relative">
+                  <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-headline-md text-headline-md text-primary">技能里程碑</h3>
+                    <button @click="addSkillCategory" class="p-1.5 rounded-lg bg-primary-container/10 hover:bg-primary-container/20 text-primary transition-colors flex items-center justify-center" title="添加技能种类">
+                      <span class="material-symbols-outlined text-[20px]">add</span>
+                    </button>
+                  </div>
+                  <div class="space-y-4">
+                    <div v-for="(cat, index) in skillCategories" :key="index" class="space-y-2 group relative">
+                      <button @click="removeSkillCategory(index)" class="absolute -left-8 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 text-error hover:bg-error-container rounded transition-all">
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                      <div class="flex justify-between items-end">
+                        <input v-model="cat.name" class="font-label-md text-label-md text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-32 transition-colors">
+                        <span class="font-label-sm text-label-sm text-on-surface-variant/60 bg-transparent text-right w-24">累计 {{ calculateCategoryTime(cat.id) }}h</span>
+                      </div>
+                      <div class="w-full h-2 bg-background rounded-full overflow-hidden flex items-center">
+                        <input v-model="cat.progress" type="range" min="0" max="100" class="w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-0 [&::-webkit-slider-thumb]:h-0" :style="`background: linear-gradient(to right, var(--tw-colors-primary-container) ${cat.progress}%, transparent ${cat.progress}%);`">
+                      </div>
+                      <div class="flex justify-between">
+                        <input v-model="cat.last" class="text-[10px] text-on-surface-variant/50 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-24 transition-colors">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Skills List -->
+                <div class="space-y-4 relative">
+                  <!-- Skills header -->
+                  <div class="flex justify-end absolute -top-10 right-0 z-10">
+                    <button @click="addSkill" class="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container-high border border-outline-variant/20 text-on-surface-variant transition-colors flex items-center justify-center gap-1">
+                      <span class="material-symbols-outlined text-[18px]">add</span>
+                      <span class="text-sm font-medium">添加技能项目</span>
+                    </button>
+                  </div>
+                  
+                  <section v-for="(skill, sIdx) in skills" :key="sIdx" class="py-4 border-t border-outline-variant/10 soft-shadow w-full relative group">
+                    <button @click="removeSkill(sIdx)" class="absolute right-0 top-4 p-1.5 opacity-0 group-hover:opacity-100 text-error hover:bg-error-container rounded transition-all z-10">
+                      <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                    <div class="space-y-4">
+                      <div class="flex gap-4 cursor-pointer items-start md:items-center transition-transform hover:-translate-y-1 w-full md:w-[90%]" @click="skill.expanded = !skill.expanded">
+                        <div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center flex-shrink-0">
+                          <span class="material-symbols-outlined text-on-tertiary-fixed">{{ skill.icon }}</span>
+                        </div>
+                        <div class="flex-1 flex flex-col items-start gap-1 min-w-0">
+                          <input v-model="skill.title" @click.stop class="font-headline-md text-label-md text-primary bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none transition-colors w-full md:w-1/2">
+                          <div class="flex flex-wrap items-center gap-2 w-full">
+                            <select v-model="skill.categoryId" @click.stop class="text-[10px] text-primary bg-surface-container-low rounded px-1 py-0.5 outline-none border border-outline-variant/20 hover:border-primary cursor-pointer flex-shrink-0">
+                              <option v-for="c in skillCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                              <option :value="null">未关联种类</option>
+                            </select>
+                            <input v-model="skill.subtitle" @click.stop class="text-label-sm text-on-surface-variant/50 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none transition-colors flex-1 min-w-[100px] md:w-40">
+                          </div>
+                        </div>
+                        <span class="material-symbols-outlined text-on-surface-variant/50 transition-transform duration-300 ml-auto flex-shrink-0 mt-2 md:mt-0" :class="skill.expanded ? 'rotate-180' : ''">expand_more</span>
+                      </div>
+
+                      <!-- Expandable List -->
+                      <transition name="slide-fade">
+                        <div v-show="skill.expanded" class="pl-4 md:pl-16 space-y-4">
+                          <div v-for="(item, index) in skill.items" :key="index" class="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 bg-surface-container-lowest/50 md:bg-transparent p-2 md:p-0 rounded-lg">
+                            <div class="flex items-center gap-2 w-full md:w-auto">
+                              <button @click.stop="removeSkillItem(sIdx, index)" class="p-1.5 text-on-surface-variant/40 hover:text-error hover:bg-error-container rounded-md transition-colors flex-shrink-0">
+                                <span class="material-symbols-outlined text-[16px]">close</span>
+                              </button>
+                              <input v-model="item.name" @mousedown.stop @click.stop type="text" placeholder="名称" class="bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm flex-1 md:w-32 lg:w-48 focus:outline-none focus:border-primary-container text-on-surface placeholder:text-on-surface-variant/40" />
+                            </div>
+                            <div class="flex items-center gap-2 w-full md:flex-1 pl-8 md:pl-0">
+                              <span class="hidden md:inline text-on-surface-variant/40">-</span>
+                              <input v-model="item.url" @mousedown.stop @click.stop type="text" placeholder="链接" class="bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm flex-1 focus:outline-none focus:border-primary-container text-on-surface placeholder:text-on-surface-variant/40" />
+                              <input v-model="item.duration" @mousedown.stop @click.stop type="number" placeholder="分钟" class="bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm w-20 flex-shrink-0 focus:outline-none focus:border-primary-container text-on-surface placeholder:text-on-surface-variant/40" title="看课时长" />
+                              <a :href="item.url" target="_blank" @click.stop class="p-1.5 rounded-lg bg-primary-container text-white hover:bg-primary transition-colors flex-shrink-0 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                              </a>
+                            </div>
+                          </div>
+                          
+                          <!-- Add Button -->
+                          <button @click.stop="addSkillItem(sIdx)" class="flex items-center gap-2 text-on-surface-variant/60 hover:text-primary transition-colors py-2">
+                            <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                            <span class="text-sm">添加新条目</span>
+                          </button>
+                        </div>
+                      </transition>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <!-- 事件: 订阅守卫 -->
+              <div v-if="activeTab === 'event'" class="space-y-12">
+                <div class="bg-primary-container p-5 md:p-8 rounded-xl soft-shadow text-white relative overflow-hidden max-w-md mx-auto">
+                  <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                    <span class="material-symbols-outlined text-[120px]">account_balance_wallet</span>
+                  </div>
+                  <div class="flex justify-between items-center mb-2 relative z-10">
+                    <h3 class="font-headline-md text-headline-md">订阅守卫</h3>
+                    <div class="flex items-center gap-1">
+                      <button v-if="totalSubPages > 1" @click="prevSubPage" :disabled="subPage === 0" class="p-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                      </button>
+                      <button v-if="totalSubPages > 1" @click="nextSubPage" :disabled="subPage === totalSubPages - 1" class="p-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                      </button>
+                      <button @click="addSubscription" class="p-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center ml-1" title="添加订阅">
+                        <span class="material-symbols-outlined text-[20px]">add</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="font-label-sm text-label-sm text-white/70 mb-6 uppercase tracking-wider relative z-10">未来30天预估: ${{ totalSubscriptionCost }}</p>
+                  
+                  <div class="space-y-2 relative z-10">
+                    <div v-for="(sub, index) in paginatedSubscriptions" :key="subPage * 4 + index"
+                      :class="['group backdrop-blur-md p-3 rounded-lg border relative transition-all duration-300',
+                        getDaysUntilExpiry(sub.expiry) !== null && getDaysUntilExpiry(sub.expiry) <= 5
+                          ? 'bg-amber-400/20 border-amber-300/60 ring-1 ring-amber-300/40'
+                          : 'bg-white/10 border-white/10']">
+                      <button @click="removeSubscription(subPage * 4 + index)" class="absolute -left-3 top-3 p-1 opacity-0 group-hover:opacity-100 text-white/60 hover:text-white hover:bg-error/80 rounded transition-all">
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                      <!-- Expiry badge -->
+                      <div v-if="getDaysUntilExpiry(sub.expiry) !== null && getDaysUntilExpiry(sub.expiry) <= 5"
+                           class="absolute top-2 right-2 flex items-center gap-1 bg-amber-400/30 text-amber-200 text-[10px] px-2 py-0.5 rounded-full font-semibold">
+                        <span class="material-symbols-outlined text-[12px]">alarm</span>
+                        {{ getDaysUntilExpiry(sub.expiry) === 0 ? '今日到期' : getDaysUntilExpiry(sub.expiry) + '天后到期' }}
+                      </div>
+                      <!-- Row 1: Icon + Name + Amount -->
+                      <div class="flex items-center gap-2 w-full">
+                        <span class="material-symbols-outlined text-white/80 flex-shrink-0 text-[18px]">{{ sub.icon }}</span>
+                        <input v-model="sub.name" class="font-headline-md text-label-md bg-transparent border-b border-transparent hover:border-white/30 focus:border-white focus:outline-none flex-1 min-w-0 transition-colors placeholder-white/50 text-white" placeholder="订阅名称">
+                        <div class="flex items-center flex-shrink-0 ml-1">
+                          <span class="font-title-md text-title-md mr-0.5 text-sm">$</span>
+                          <input v-model="sub.amount" type="number" step="0.01" class="font-title-md text-title-md bg-transparent border-b border-transparent hover:border-white/30 focus:border-white focus:outline-none w-14 text-right transition-colors text-sm" placeholder="0.00">
+                        </div>
+                      </div>
+                      <!-- Row 2: Cycle + Expiry Date Picker -->
+                      <div class="flex items-center gap-1 text-[10px] text-white/60 mt-1 pl-6">
+                        <select v-model="sub.cycle" class="text-[10px] bg-transparent border-b border-transparent hover:border-white/30 focus:border-white focus:outline-none cursor-pointer appearance-none outline-none flex-shrink-0">
+                          <option class="text-black" value="按月">按月</option>
+                          <option class="text-black" value="按年">按年</option>
+                        </select>
+                        <span class="pointer-events-none flex-shrink-0 whitespace-nowrap mx-1">• 到期</span>
+                        <div class="relative flex-1 min-w-0">
+                          <input type="date" v-model="sub.expiry"
+                            class="text-[10px] bg-transparent border-b border-white/30 focus:border-white focus:outline-none w-full transition-colors text-white/80 cursor-pointer"
+                            style="color-scheme: dark;" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 成长: 求职看板 -->
+              <div v-if="activeTab === 'growth'" class="space-y-12">
+                <div class="bg-surface-container-lowest rounded-xl p-4 md:p-8 soft-shadow border border-outline-variant/10">
+                  <div class="flex justify-between items-center mb-8">
+                    <h3 class="font-headline-md text-headline-md text-primary">求职看板</h3>
+                    <div class="flex items-center gap-2">
+                      <button v-if="totalJobPages > 1" @click="prevJobPage" :disabled="jobPage === 0" class="p-1 rounded-lg bg-surface-variant hover:bg-outline-variant/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary">
+                        <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                      </button>
+                      <button v-if="totalJobPages > 1" @click="nextJobPage" :disabled="jobPage === totalJobPages - 1" class="p-1 rounded-lg bg-surface-variant hover:bg-outline-variant/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-primary">
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                      </button>
+                      <button @click="addJob" class="bg-primary-container text-white px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary transition-all flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[18px]">add</span>
+                        新增申请
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="w-full">
+                    <!-- Header (Desktop only) -->
+                    <div class="hidden md:flex text-left text-on-surface-variant/60 pb-4 px-4 font-label-sm text-label-sm uppercase tracking-wider">
+                      <div class="w-1/3">公司</div>
+                      <div class="w-1/4">岗位</div>
+                      <div class="w-1/4">地点</div>
+                      <div class="w-1/6 text-right">状态</div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                      <div v-for="(job, index) in paginatedJobs" :key="jobPage * 4 + index" 
+                           :class="['transition-colors rounded-xl p-4 md:p-2 md:px-4 flex flex-col md:flex-row md:items-center gap-4 group relative',
+                                    job.status === 'Offer' ? 'bg-emerald-500/20 border border-emerald-400/50 hover:bg-emerald-500/30 ring-1 ring-emerald-400/30' : 'bg-surface-container-low/50 hover:bg-surface-container-low']">
+                        <!-- Mobile Close Btn -->
+                        <button @click="removeJob(jobPage * 4 + index)" class="absolute right-2 top-2 md:right-4 md:top-1/2 md:-translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 text-error hover:bg-error-container rounded transition-all z-10 md:hidden">
+                          <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                        
+                        <!-- Company -->
+                        <div class="w-full md:w-1/3 flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center font-bold text-primary flex-shrink-0">{{ job.company ? job.company.charAt(0).toUpperCase() : 'N' }}</div>
+                          <input v-model="job.company" class="font-headline-md text-headline-md bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-full md:w-3/4 transition-colors placeholder:text-on-surface-variant/40" placeholder="公司名">
+                        </div>
+
+                        <!-- Role -->
+                        <div class="w-full md:w-1/4 flex justify-between items-center md:block">
+                          <span class="md:hidden text-label-sm text-on-surface-variant/60 uppercase">岗位</span>
+                          <input v-model="job.role" class="font-body-md text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-2/3 md:w-full transition-colors text-right md:text-left placeholder:text-on-surface-variant/40" placeholder="职位名称">
+                        </div>
+
+                        <!-- Location & Salary -->
+                        <div class="w-full md:w-1/4 flex flex-col items-end md:items-start justify-center gap-1">
+                          <div class="flex justify-between items-center md:block w-full">
+                            <span class="md:hidden text-label-sm text-on-surface-variant/60 uppercase">地点</span>
+                            <input v-model="job.location" class="font-body-md text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-2/3 md:w-full transition-colors text-right md:text-left placeholder:text-on-surface-variant/40" placeholder="城市/远程">
+                          </div>
+                          <div class="flex justify-between items-center md:block w-full">
+                            <span class="md:hidden text-label-sm text-on-surface-variant/60 uppercase">薪资</span>
+                            <input v-model="job.salary" class="font-body-sm text-on-surface-variant/80 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-2/3 md:w-full transition-colors text-right md:text-left placeholder:text-on-surface-variant/30" placeholder="薪资范围">
+                          </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="w-full md:w-1/6 flex justify-between items-center md:justify-end pr-0 md:pr-10 relative">
+                          <span class="md:hidden text-label-sm text-on-surface-variant/60 uppercase">状态</span>
+                          <select v-model="job.status" class="px-2 py-1 bg-surface-variant text-on-surface-variant rounded-full text-[12px] md:text-[13px] font-label-sm w-[120px] text-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary border border-transparent hover:border-outline-variant/30 transition-colors" dir="rtl">
+                            <option value="简历初筛">简历初筛</option>
+                            <option value="笔试/测试件评估">笔试/测试件评估</option>
+                            <option value="一面">一面</option>
+                            <option value="二面">二面</option>
+                            <option value="Offer">Offer</option>
+                            <option value="人才库">人才库</option>
+                          </select>
+                        </div>
+                        
+                        <!-- Desktop Close Btn -->
+                        <button @click="removeJob(index)" class="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 text-error hover:bg-error-container rounded transition-all z-10">
+                          <span class="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </transition>
+          
+        </div>
+        <!-- Bottom Margin -->
+        <div class="h-24"></div>
+      </main>
+    </div>
+
+  </div>
+
+  <script>
+    const { createApp, ref, watch, onMounted, nextTick, computed } = Vue;
+
+    const App = {
+      setup() {
+        const appName = ref('LifeCanvas');
+        const greeting = ref('鹰与蝉');
+        const description = ref('人生到处知何似, 应似飞鸿踏雪泥。');
+        const showDashboard = ref(false);
+        const activeTab = ref('todo');
+        const alertTime = ref('20:00');
+        const sidebarOpen = ref(window.innerWidth >= 768);
+        
+        // Skill Categories (shown in the grey box)
+        const skillCategories = ref([
+          { id: 1, name: '数字插画', progress: 65, last: '2天前' },
+          { id: 2, name: '品牌策略', progress: 92, last: '今天' }
+        ]);
+        const addSkillCategory = () => {
+          skillCategories.value.push({ id: Date.now(), name: '新种类', progress: 0, last: '刚刚' });
+        };
+        const removeSkillCategory = (index) => {
+          skillCategories.value.splice(index, 1);
+        };
+
+        // Skills (shown below like 色彩理论项目)
+        const skills = ref([
+          {
+            title: '色彩理论项目',
+            subtitle: '下次练习: 明天, 9:00 AM',
+            icon: 'palette',
+            categoryId: 1,
+            expanded: false,
+            items: [
+              { name: '色彩理论基础教程', url: 'https://bilibili.com/', duration: 45 }
+            ]
+          }
+        ]);
+        const addSkill = () => {
+          skills.value.push({
+            title: '新技能项目',
+            subtitle: '下次练习: 待定',
+            icon: 'star',
+            categoryId: null,
+            expanded: true,
+            items: []
+          });
+        };
+        const removeSkill = (index) => {
+          skills.value.splice(index, 1);
+        };
+
+        const addSkillItem = (skillIndex) => {
+          skills.value[skillIndex].items.push({ name: '', url: '', duration: '' });
+        };
+        const removeSkillItem = (skillIndex, itemIndex) => {
+          skills.value[skillIndex].items.splice(itemIndex, 1);
+        };
+
+        const calculateCategoryTime = (catId) => {
+          let totalMinutes = 0;
+          skills.value.forEach(skill => {
+            if (skill.categoryId === catId) {
+              skill.items.forEach(item => {
+                totalMinutes += Number(item.duration) || 0;
+              });
+            }
+          });
+          return (totalMinutes / 60).toFixed(1);
+        };
+
+        const jobs = ref([
+          { company: '维兰工作室', role: '资深产品设计师', location: '上海 / 混合办公', salary: '25k-30k', status: '一面' },
+          { company: 'Kinfolk', role: '艺术总监', location: '远程', salary: '', status: '简历初筛' }
+        ]);
+        const addJob = () => {
+          jobs.value.push({ company: '', role: '', location: '', salary: '', status: '简历初筛' });
+        };
+        const removeJob = (index) => {
+          jobs.value.splice(index, 1);
+          if (jobPage.value >= totalJobPages.value && jobPage.value > 0) jobPage.value--;
+        };
+
+        const jobPage = ref(0);
+        const totalJobPages = computed(() => Math.ceil(jobs.value.length / 4));
+        const paginatedJobs = computed(() => {
+          const start = jobPage.value * 4;
+          return jobs.value.slice(start, start + 4);
+        });
+        const prevJobPage = () => { if (jobPage.value > 0) jobPage.value--; };
+        const nextJobPage = () => { if (jobPage.value < totalJobPages.value - 1) jobPage.value++; };
+
+        const rituals = ref([
+          { icon: 'menu_book', name: '哲学阅读', completed: 15, target: 18, color: 'outline', lastCheckInDate: '' },
+          { icon: 'fitness_center', name: '晨间瑜伽', completed: 12, target: 18, color: 'primary', lastCheckInDate: '' }
+        ]);
+        const addRitual = () => {
+          rituals.value.push({ icon: 'star', name: '', completed: 0, target: 18, color: 'primary', lastCheckInDate: '' });
+        };
+        const removeRitual = (index) => {
+          rituals.value.splice(index, 1);
+          if (ritualPage.value >= totalRitualPages.value && ritualPage.value > 0) ritualPage.value--;
+        };
+        const checkInRitual = (index) => {
+          const ritual = rituals.value[index];
+          const today = new Date().toLocaleDateString();
+          if (ritual.lastCheckInDate !== today && ritual.completed < ritual.target) {
+            ritual.completed++;
+            ritual.lastCheckInDate = today;
+          }
+        };
+
+        const ritualPage = ref(0);
+        const totalRitualPages = computed(() => Math.ceil(rituals.value.length / 4));
+        const paginatedRituals = computed(() => {
+          const start = ritualPage.value * 4;
+          return rituals.value.slice(start, start + 4);
+        });
+        const prevRitualPage = () => { if (ritualPage.value > 0) ritualPage.value--; };
+        const nextRitualPage = () => { if (ritualPage.value < totalRitualPages.value - 1) ritualPage.value++; };
+
+        const subscriptions = ref([
+          { name: 'Netflix', cycle: '按月', expiry: '8月28日', amount: 15.99, icon: 'play_circle' },
+          { name: 'Spotify', cycle: '按年', expiry: '9月12日', amount: 9.99, icon: 'music_note' }
+        ]);
+        const addSubscription = () => {
+          subscriptions.value.push({ name: '', cycle: '按月', expiry: '', amount: 0.00, icon: 'star' });
+        };
+        const removeSubscription = (index) => {
+          subscriptions.value.splice(index, 1);
+          if (subPage.value >= totalSubPages.value && subPage.value > 0) subPage.value--;
+        };
+        
+        const subPage = ref(0);
+        const totalSubPages = computed(() => Math.ceil(subscriptions.value.length / 4));
+        const paginatedSubscriptions = computed(() => {
+          const start = subPage.value * 4;
+          return subscriptions.value.slice(start, start + 4);
+        });
+        const prevSubPage = () => { if (subPage.value > 0) subPage.value--; };
+        const nextSubPage = () => { if (subPage.value < totalSubPages.value - 1) subPage.value++; };
+        const totalSubscriptionCost = computed(() => {
+          let total = 0;
+          subscriptions.value.forEach(sub => {
+            const amt = Number(sub.amount) || 0;
+            if (sub.cycle === '按年') {
+              total += amt / 12;
+            } else {
+              total += amt;
+            }
+          });
+          return total.toFixed(2);
+        });
+
+        const triggerAnimations = async () => {
+          await nextTick();
+          const cards = document.querySelectorAll('.soft-shadow');
+          cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+              card.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+              card.style.opacity = '1';
+              card.style.transform = 'translateY(0)';
+            }, index * 100);
+          });
+
+          const dots = document.querySelectorAll('.dot-anim');
+          dots.forEach(dot => {
+            dot.addEventListener('mouseenter', () => {
+              dot.style.transform = 'scale(1.2)';
+              dot.style.transition = 'transform 0.2s ease';
+            });
+            dot.addEventListener('mouseleave', () => {
+              dot.style.transform = 'scale(1)';
+            });
+          });
+        };
+
+        const enterDashboard = async () => {
+          showDashboard.value = true;
+          activeTab.value = 'todo';
+          triggerAnimations();
+          
+          if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+          }
+
+          if (window.lucide) {
+             lucide.createIcons();
+          }
+        };
+
+        watch(activeTab, () => {
+          triggerAnimations();
+        });
+
+        // Setup persistent storage watch using deep watcher
+        const userAvatar = ref('');
+        const uploadAvatar = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            userAvatar.value = e.target.result;
+          };
+          reader.readAsDataURL(file);
+          event.target.value = '';
+        };
+
+        watch(userAvatar, (newVal) => localforage.setItem('userAvatar', newVal));
+        watch(alertTime, (newVal) => localforage.setItem('alertTime', newVal));
+        watch(skillCategories, (newVal) => localforage.setItem('skillCategories', JSON.parse(JSON.stringify(newVal))), { deep: true });
+        watch(skills, (newVal) => localforage.setItem('skills', JSON.parse(JSON.stringify(newVal))), { deep: true });
+        watch(jobs, (newVal) => localforage.setItem('jobs', JSON.parse(JSON.stringify(newVal))), { deep: true });
+        watch(rituals, (newVal) => localforage.setItem('rituals', JSON.parse(JSON.stringify(newVal))), { deep: true });
+        watch(subscriptions, (newVal) => localforage.setItem('subscriptions', JSON.parse(JSON.stringify(newVal))), { deep: true });
+
+        const parseDate = (dateStr) => {
+          if (!dateStr) return null;
+          // ISO format YYYY-MM-DD (from date picker)
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return isNaN(d.getTime()) ? null : d;
+          }
+          // Legacy format X月X日
+          const match = dateStr.match(/(\d+)月(\d+)日/);
+          if (!match) return null;
+          const month = parseInt(match[1]) - 1;
+          const day = parseInt(match[2]);
+          const now = new Date();
+          let date = new Date(now.getFullYear(), month, day);
+          if (date.getTime() < now.getTime() - 30 * 24 * 60 * 60 * 1000) {
+            date.setFullYear(now.getFullYear() + 1);
+          }
+          return date;
+        };
+
+        const getDaysUntilExpiry = (dateStr) => {
+          const d = parseDate(dateStr);
+          if (!d) return null;
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return diff;
+        };
+
+        onMounted(async () => {
+          if (window.lucide) {
+            lucide.createIcons();
+          }
+
+          try {
+            // Load persistent data on mount
+            const storedSkillCategories = await localforage.getItem('skillCategories');
+            if (storedSkillCategories) skillCategories.value = storedSkillCategories;
+
+            const storedSkills = await localforage.getItem('skills');
+            if (storedSkills) skills.value = storedSkills;
+
+            const storedJobs = await localforage.getItem('jobs');
+            if (storedJobs) jobs.value = storedJobs;
+
+            const storedRituals = await localforage.getItem('rituals');
+            if (storedRituals) rituals.value = storedRituals;
+
+            const storedSubscriptions = await localforage.getItem('subscriptions');
+            if (storedSubscriptions) subscriptions.value = storedSubscriptions;
+
+            const storedAvatar = await localforage.getItem('userAvatar');
+            if (storedAvatar) userAvatar.value = storedAvatar;
+
+            const storedAlertTime = await localforage.getItem('alertTime');
+            if (storedAlertTime) alertTime.value = storedAlertTime;
+          } catch (error) {
+            console.error('Failed to load data from IndexedDB:', error);
+          }
+
+          // Setup Web Notifications logic (request is triggered on Enter now)
+
+          const checkAlerts = () => {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            const now = new Date();
+            const todayStr = now.toLocaleDateString();
+
+            // Check Subscriptions
+            subscriptions.value.forEach(sub => {
+              if (!sub.expiry) return;
+              const days = getDaysUntilExpiry(sub.expiry);
+              if (days !== null && days >= 0 && days <= 3) {
+                  const key = `notified_sub_${sub.name}_${todayStr}`;
+                  const count = parseInt(localStorage.getItem(key) || "0", 10);
+                  if (count < 3) {
+                    new Notification("订阅到期预警", { body: `${sub.name} 还有 ${Math.max(0, days)} 天到期，请确认是否续订。` });
+                    localStorage.setItem(key, (count + 1).toString());
+                  }
+              }
+            });
+
+            // Check Rituals
+            const [alertHour, alertMinute] = (alertTime.value || '20:00').split(':').map(Number);
+            if (now.getHours() > alertHour || (now.getHours() === alertHour && now.getMinutes() >= alertMinute)) {
+              rituals.value.forEach(ritual => {
+                if (ritual.lastCheckInDate !== todayStr && ritual.completed < ritual.target) {
+                  const key = `notified_ritual_${ritual.name}_${todayStr}`;
+                  const count = parseInt(localStorage.getItem(key) || "0", 10);
+                  if (count < 3) {
+                    new Notification("每日打卡提醒", { body: `您今天还没有完成 ${ritual.name} 的打卡哦！` });
+                    localStorage.setItem(key, (count + 1).toString());
+                  }
+                }
+              });
+            }
+          };
+
+          // Run immediately and then every hour
+          checkAlerts();
+          setInterval(checkAlerts, 1000 * 60 * 60);
+        });
+
+        const exportData = async () => {
+          const data = {
+            skillCategories: await localforage.getItem('skillCategories'),
+            skills: await localforage.getItem('skills'),
+            jobs: await localforage.getItem('jobs'),
+            rituals: await localforage.getItem('rituals'),
+            subscriptions: await localforage.getItem('subscriptions'),
+            userAvatar: await localforage.getItem('userAvatar'),
+            alertTime: await localforage.getItem('alertTime')
+          };
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `lifecanvas_backup_${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+
+        const handleImport = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            try {
+              const data = JSON.parse(e.target.result);
+              if (data.skillCategories) skillCategories.value = data.skillCategories;
+              if (data.skills) skills.value = data.skills;
+              if (data.jobs) jobs.value = data.jobs;
+              if (data.rituals) rituals.value = data.rituals;
+              if (data.subscriptions) subscriptions.value = data.subscriptions;
+              if (data.userAvatar) userAvatar.value = data.userAvatar;
+              if (data.alertTime) alertTime.value = data.alertTime;
+              alert('数据导入成功！页面状态已刷新。');
+            } catch (err) {
+              alert('导入失败，请确保您上传的是有效的 JSON 备份文件。');
+              console.error(err);
+            }
+            event.target.value = ''; // reset file input
+          };
+          reader.readAsText(file);
+        };
+
+        return {
+          appName,
+          greeting,
+          description,
+          showDashboard,
+          activeTab,
+          enterDashboard,
+          exportData,
+          handleImport,
+          userAvatar,
+          uploadAvatar,
+          alertTime,
+          sidebarOpen,
+          skillCategories,
+          addSkillCategory,
+          removeSkillCategory,
+          skills,
+          addSkill,
+          removeSkill,
+          addSkillItem,
+          removeSkillItem,
+          calculateCategoryTime,
+          jobs,
+          addJob,
+          removeJob,
+          jobPage,
+          totalJobPages,
+          paginatedJobs,
+          prevJobPage,
+          nextJobPage,
+          getDaysUntilExpiry,
+          subscriptions,
+          addSubscription,
+          removeSubscription,
+          totalSubscriptionCost,
+          subPage,
+          totalSubPages,
+          paginatedSubscriptions,
+          prevSubPage,
+          nextSubPage,
+          rituals,
+          addRitual,
+          removeRitual,
+          checkInRitual,
+          ritualPage,
+          totalRitualPages,
+          paginatedRituals,
+          prevRitualPage,
+          nextRitualPage
+        }
+      }
+    };
+
+    createApp(App).mount('#app');
+  </script>
+</body>
+</html>
