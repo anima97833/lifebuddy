@@ -7,11 +7,13 @@ import { SkillBoard } from '@/components/SkillBoard';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { JobBoard } from '@/components/JobBoard';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
+import { useSyncState } from '@/hooks/useSyncState';
 
 export default function Home() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState('todo');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [notificationTime, setNotificationTime] = useSyncState('notificationTime', '20:00');
 
   if (!showDashboard) {
     return (
@@ -48,10 +50,16 @@ export default function Home() {
                 Enter
               </button>
               <div className="flex-1 relative group">
-                <input type="time" defaultValue="20:00" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" title="设置打卡提醒时间" />
+                <input 
+                  type="time" 
+                  value={notificationTime} 
+                  onChange={(e) => setNotificationTime(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                  title="设置打卡提醒时间" 
+                />
                 <button className="w-full py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase group-hover:border-muji-alert group-hover:text-muji-alert transition-all flex items-center justify-center gap-2 relative z-0">
                   <span className="material-symbols-outlined text-[16px]">notifications</span>
-                  20:00
+                  {notificationTime}
                 </button>
               </div>
             </div>

@@ -32,25 +32,42 @@ export async function GET(request: Request) {
       const pushSub = subRow.value;
       if (!pushSub) continue;
 
-      // 并发查询该用户的 habits 和 subscriptions
+      // 并发查询该用户的 habits, subscriptions, 提醒时间和上次推送时间
       const { data: userStates, error: stateError } = await supabase
         .from('user_state')
         .select('key, value')
         .eq('user_id', userId)
-        .in('key', ['subscriptions', 'rituals']);
+        .in('key', ['subscriptions', 'rituals', 'notificationTime', 'lastNotifiedDate']);
 
       if (stateError) continue;
 
       let subscriptions: any[] = [];
       let rituals: any[] = [];
+      let notificationTime = '20:00';
+      let lastNotifiedDate = '';
 
       userStates.forEach(row => {
         if (row.key === 'subscriptions') subscriptions = row.value || [];
         if (row.key === 'rituals') rituals = row.value || [];
+        if (row.key === 'notificationTime') notificationTime = String(row.value);
+        if (row.key === 'lastNotifiedDate') lastNotifiedDate = String(row.value);
       });
 
       const notificationsToSend: string[] = [];
       const now = new Date();
+      const todayStr = now.toLocaleDateString();
+      
+      // 解析用户设定的提醒时间 (格式如 "23:23")
+      const [targetHour, targetMinute] = notificationTime.split(':').map(Number);
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      // 如果还没到设定的时间，或者今天已经推过了，则跳过该用户
+      const isTimePassed = currentHour > targetHour || (currentHour === targetHour && currentMinute >= targetMinute);
+      if (!isTimePassed || lastNotifiedDate === todayStr) {
+        continue;
+      }
+
       now.setHours(0, 0, 0, 0);
 
       // 1. 检查订阅
@@ -75,7 +92,7 @@ export async function GET(request: Request) {
             uncompletedRituals++;
           }
         });
-        if (uncompletedRituals > 0 && new Date().getHours() >= 20) {
+        if (uncompletedRituals > 0) {
           notificationsToSend.push(`您今天还有 ${uncompletedRituals} 个习惯未打卡，记得完成哦。`);
         }
       }
@@ -90,6 +107,12 @@ export async function GET(request: Request) {
         try {
           await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
           pushedCount++;
+          
+          // 记录今天已推送，防止重复打扰
+          await supabase.from('user_state').upsert(
+            { user_id: userId, key: 'lastNotifiedDate', value: todayStr },
+            { onConflict: 'user_id,key' }
+          );
         } catch (error: any) {
           if (error.statusCode === 410 || error.statusCode === 404) {
             await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
