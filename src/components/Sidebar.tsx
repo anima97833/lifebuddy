@@ -104,6 +104,16 @@ export function Sidebar({ sidebarOpen, setSidebarOpen, activeTab, setActiveTab }
             <span className="material-symbols-outlined text-[18px]">trending_up</span>
             <span className="font-label-md text-label-md" style={{ writingMode: 'vertical-lr', letterSpacing: '0.2em' }}>成长</span>
           </button>
+
+          <button 
+            onClick={() => setActiveTab('summary')} 
+            className={`group flex flex-col items-center justify-center py-4 w-full gap-2 transition-colors cursor-pointer rounded-xl border-none outline-none ${
+              activeTab === 'summary' ? 'bg-surface-container-highest text-on-surface font-bold' : 'text-on-surface-variant/70 hover:bg-surface-container-low'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">history_edu</span>
+            <span className="font-label-md text-label-md" style={{ writingMode: 'vertical-lr', letterSpacing: '0.2em' }}>总结</span>
+          </button>
         </nav>
 
         {/* Collapse / Hide Button */}

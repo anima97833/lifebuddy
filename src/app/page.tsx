@@ -6,6 +6,7 @@ import { RitualBoard } from '@/components/RitualBoard';
 import { SkillBoard } from '@/components/SkillBoard';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { JobBoard } from '@/components/JobBoard';
+import { SummaryBoard } from '@/components/SummaryBoard';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { useSyncState } from '@/hooks/useSyncState';
 
@@ -105,6 +106,7 @@ export default function Home() {
           {activeTab === 'habit' && <SkillBoard />}
           {activeTab === 'event' && <SubscriptionGuard />}
           {activeTab === 'growth' && <JobBoard />}
+          {activeTab === 'summary' && <SummaryBoard />}
         </div>
         
         {/* Bottom Margin */}
