@@ -24,9 +24,40 @@ export function PushNotificationSetup() {
       // 如果还没授权，就弹出自定义的授权提示 UI
       if (Notification.permission === 'default') {
         setShowPrompt(true);
+      } else if (Notification.permission === 'granted') {
+        // 静默同步订阅到服务器，防止因为覆盖导致手机端凭据丢失
+        syncSubscription();
       }
     }
   }, []);
+
+  const syncSubscription = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (publicVapidKey) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+          });
+        }
+      }
+
+      if (subscription) {
+        await fetch('/api/push-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+        console.log('[PushSetup] 静默同步推送订阅完成');
+      }
+    } catch (e) {
+      console.error('[PushSetup] 静默同步订阅失败:', e);
+    }
+  };
 
   const handleSubscribe = async () => {
     console.log('[PushSetup] 1. 开始订阅流程');
