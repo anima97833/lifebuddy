@@ -39,6 +39,7 @@ export async function POST() {
     for (const pushSub of pushSubs) {
       if (!pushSub?.endpoint) continue;
       try {
+        console.log('[Test-Push] 发送目标:', pushSub.endpoint);
         await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
         successCount++;
       } catch (err: any) {

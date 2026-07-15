@@ -42,8 +42,14 @@ export function PushNotificationSetup() {
         return;
       }
 
-      console.log('[PushSetup] 4. 开始注册 Service Worker (/sw.js)...');
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      let registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration) {
+        console.log('[PushSetup] 4. 未发现已有 Registration，开始注册 Service Worker (/sw.js)...');
+        registration = await navigator.serviceWorker.register('/sw.js');
+      } else {
+        console.log('[PushSetup] 4. 发现已有 Registration，复用现有的 Service Worker。');
+      }
+      
       console.log('[PushSetup] 5. Service Worker 注册成功:', registration);
       
       console.log('[PushSetup] 6. 等待 Service Worker 处于 active 状态...');
