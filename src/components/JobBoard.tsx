@@ -34,6 +34,7 @@ export function JobBoard() {
   };
 
   const removeJob = (index: number) => {
+    if (!window.confirm("确定要删除这条申请记录吗？")) return;
     setJobs((prev) => {
       const copy = [...prev];
       copy.splice(index, 1);

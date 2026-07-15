@@ -35,6 +35,7 @@ export function RitualBoard() {
   };
 
   const removeRitual = (index: number) => {
+    if (!window.confirm("确定要删除这项日常仪式吗？")) return;
     setRituals((prev) => {
       const copy = [...prev];
       copy.splice(index, 1);
@@ -115,7 +116,19 @@ export function RitualBoard() {
                   </div>
                   <div className="flex items-center gap-2 self-end md:self-auto">
                     <div className="flex items-center font-headline-md text-headline-md text-primary">
-                      <span className="w-8 text-right">{ritual.completed}</span>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={ritual.completed}
+                        onChange={(e) => {
+                          setRituals(prev => {
+                            const copy = [...prev];
+                            copy[actualIndex].completed = Number(e.target.value);
+                            return copy;
+                          });
+                        }}
+                        className="w-10 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none transition-colors text-right"
+                      />
                       <span className="mx-1">/</span>
                       <input 
                         type="number" 

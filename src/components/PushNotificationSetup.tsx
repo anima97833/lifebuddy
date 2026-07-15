@@ -126,18 +126,57 @@ export function PushNotificationSetup() {
     // 可以在这里把用户的“拒绝”存入 localStorage，以免以后反复弹窗
   };
 
+  const [isDialOpen, setIsDialOpen] = useState(false);
+
   if (!showPrompt) {
     if (typeof window !== 'undefined' && Notification.permission === 'granted') {
       return (
-        <button 
-          onClick={handleTestPush}
-          disabled={isSubscribing}
-          className="fixed bottom-4 right-4 z-[9999] p-3 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-transform active:scale-95 disabled:opacity-50 flex items-center justify-center group"
-          title="测试云端推送链路"
-        >
-          <span className="material-symbols-outlined text-[20px] group-hover:animate-ping absolute opacity-0 group-hover:opacity-30">notifications_active</span>
-          <span className="material-symbols-outlined text-[20px] relative z-10">send</span>
-        </button>
+        <div className="fixed bottom-4 right-4 z-[9999]">
+          {/* Radial Menu Items */}
+          <div className={`absolute bottom-0 right-0 w-12 h-12 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${isDialOpen ? 'opacity-100' : 'opacity-0 pointer-events-none scale-50'}`}>
+            {/* Item 1: Test Push (angle 90, straight up) */}
+            <button 
+              onClick={handleTestPush}
+              disabled={isSubscribing}
+              className={`absolute p-3 rounded-full bg-surface-container-high text-on-surface hover:bg-primary hover:text-white shadow-lg transition-all duration-300 ${isDialOpen ? 'translate-y-[-72px]' : 'translate-y-0'} flex items-center justify-center`}
+              title="测试云端推送链路"
+              style={{ bottom: 0, right: 0 }}
+            >
+              <span className="material-symbols-outlined text-[18px]">send</span>
+            </button>
+            
+            {/* Item 2: AI Chat Placeholder (angle 135, up-left) */}
+            <button 
+              onClick={() => { alert('AI聊天功能开发中...') }}
+              className={`absolute p-3 rounded-full bg-surface-container-high text-on-surface hover:bg-primary hover:text-white shadow-lg transition-all duration-300 delay-75 ${isDialOpen ? 'translate-x-[-51px] translate-y-[-51px]' : 'translate-x-0 translate-y-0'} flex items-center justify-center`}
+              title="AI 智能助手"
+              style={{ bottom: 0, right: 0 }}
+            >
+              <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+            </button>
+
+            {/* Item 3: Future Expansion (angle 180, straight left) */}
+            <button 
+              onClick={() => { alert('更多功能敬请期待...') }}
+              className={`absolute p-3 rounded-full bg-surface-container-high text-on-surface hover:bg-primary hover:text-white shadow-lg transition-all duration-300 delay-150 ${isDialOpen ? 'translate-x-[-72px]' : 'translate-x-0'} flex items-center justify-center`}
+              title="更多扩展"
+              style={{ bottom: 0, right: 0 }}
+            >
+              <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+            </button>
+          </div>
+
+          {/* Main FAB (Flower) */}
+          <button 
+            onClick={() => setIsDialOpen(!isDialOpen)}
+            className="relative p-3 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-transform active:scale-95 flex items-center justify-center z-10"
+            title="扩展菜单"
+          >
+            <span className={`material-symbols-outlined text-[24px] transition-transform duration-500 ${isDialOpen ? 'rotate-180 scale-110' : 'rotate-0'}`}>
+              filter_vintage
+            </span>
+          </button>
+        </div>
       );
     }
     return null;

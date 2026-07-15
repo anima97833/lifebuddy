@@ -34,6 +34,7 @@ export function SubscriptionGuard() {
   };
 
   const removeSubscription = (index: number) => {
+    if (!window.confirm("确定要删除这项订阅吗？")) return;
     setSubscriptions((prev) => {
       const copy = [...prev];
       copy.splice(index, 1);

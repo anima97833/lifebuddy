@@ -49,6 +49,7 @@ export function SkillBoard() {
   };
 
   const removeSkillCategory = (index: number) => {
+    if (!window.confirm("确定要删除这个技能种类吗？")) return;
     setSkillCategories(prev => {
       const copy = [...prev];
       copy.splice(index, 1);
@@ -84,6 +85,7 @@ export function SkillBoard() {
   };
 
   const removeSkill = (index: number) => {
+    if (!window.confirm("确定要删除这个技能项目吗？")) return;
     setSkills(prev => {
       const copy = [...prev];
       copy.splice(index, 1);
@@ -100,6 +102,7 @@ export function SkillBoard() {
   };
 
   const removeSkillItem = (skillIndex: number, itemIndex: number) => {
+    if (!window.confirm("确定要删除这个技能条目吗？")) return;
     setSkills(prev => {
       const copy = [...prev];
       copy[skillIndex].items.splice(itemIndex, 1);

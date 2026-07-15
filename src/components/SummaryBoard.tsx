@@ -88,6 +88,7 @@ export function SummaryBoard() {
   };
 
   const removeSummaryProject = (id: number) => {
+    if (!window.confirm("确定要删除整个复盘项目吗？此操作不可撤销。")) return;
     if (summaryProjects.length <= 1) return;
     const newProjects = summaryProjects.filter(p => p.id !== id);
     setSummaryProjects(newProjects);
@@ -110,6 +111,7 @@ export function SummaryBoard() {
   };
 
   const removeSummaryPhase = (projectId: number, phaseId: number) => {
+    if (!window.confirm("确定要删除这个阶段吗？")) return;
     updateProject(projectId, (proj) => {
       if (proj.phases.length > 1) {
         proj.phases = proj.phases.filter(p => p.id !== phaseId);
@@ -142,6 +144,7 @@ export function SummaryBoard() {
   };
 
   const removeSummaryTimelineItem = (projectId: number, phaseId: number, itemIndex: number) => {
+    if (!window.confirm("确定要删除这个项目具体条目吗？")) return;
     updateProject(projectId, (proj) => {
       const phaseIndex = proj.phases.findIndex(p => p.id === phaseId);
       if (phaseIndex !== -1) {
@@ -343,7 +346,7 @@ export function SummaryBoard() {
                       <textarea 
                         value={item.desc}
                         onChange={e => updateTimelineItem(activeSummaryProject.id, activeSummaryPhase.id, index, 'desc', e.target.value)}
-                        className="font-body-md text-sm md:text-[15px] text-on-surface/75 leading-relaxed bg-transparent border border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-full transition-colors resize-none overflow-hidden min-h-[60px]" 
+                        className="font-body-md text-sm md:text-[15px] text-on-surface/75 leading-relaxed bg-transparent border border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-full transition-colors overflow-y-auto min-h-[120px]" 
                         placeholder="模块内容..." 
                       />
                     </div>
