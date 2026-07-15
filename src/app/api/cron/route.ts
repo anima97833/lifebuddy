@@ -68,9 +68,9 @@ export async function GET(request: Request) {
       const currentHour = now.getUTCHours(); // 此时 now 已经是北京时间，用 getUTCHours() 读取
       const currentMinute = now.getUTCMinutes();
       
-      // 如果还没到设定的时间，或者今天已经推过了，则跳过该用户
+      // 如果还没到设定的时间，则跳过该用户
       const isTimePassed = currentHour > targetHour || (currentHour === targetHour && currentMinute >= targetMinute);
-      if (!isTimePassed || lastNotifiedDate === todayStr) {
+      if (!isTimePassed) {
         continue;
       }
 
@@ -148,14 +148,6 @@ export async function GET(request: Request) {
             { onConflict: 'user_id,key' }
           );
         }
-      }
-
-      // 只要有一个设备成功，就记录今天已推送，防止重复打扰
-      if (userSuccessCount > 0) {
-        await supabase.from('user_state').upsert(
-          { user_id: userId, key: 'lastNotifiedDate', value: todayStr },
-          { onConflict: 'user_id,key' }
-        );
       }
     }
 
