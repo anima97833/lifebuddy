@@ -27,30 +27,51 @@ export async function POST() {
       );
     }
 
-    const pushSub = data.value as webpush.PushSubscription;
+    const pushSubs = Array.isArray(data.value) ? data.value : [data.value];
+    let successCount = 0;
+    let expiredEndpoints = new Set<string>();
 
-    await webpush.sendNotification(
-      pushSub,
-      JSON.stringify({
-        title: '🎉 测试成功！',
-        body: '推送链路完全通畅，您的 LifeCanvas 守护提醒已就位！',
-      })
-    );
+    const payload = JSON.stringify({
+      title: '🎉 测试成功！',
+      body: '推送链路完全通畅，您的 LifeCanvas 守护提醒已就位！',
+    });
 
-    return NextResponse.json({ success: true, message: '测试通知已发出！' });
-  } catch (err: any) {
-    // 凭证过期时自动清理
-    if (err.statusCode === 410 || err.statusCode === 404) {
-      await supabase
-        .from('user_state')
-        .delete()
-        .eq('user_id', 'demo_user_001')
-        .eq('key', 'pushSub');
+    for (const pushSub of pushSubs) {
+      if (!pushSub?.endpoint) continue;
+      try {
+        await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
+        successCount++;
+      } catch (err: any) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          expiredEndpoints.add(pushSub.endpoint);
+        } else {
+          console.error('Test push failed for endpoint:', pushSub.endpoint, err);
+        }
+      }
+    }
+
+    // 清理过期凭据
+    if (expiredEndpoints.size > 0) {
+      const validSubs = pushSubs.filter((sub: any) => !expiredEndpoints.has(sub.endpoint));
+      if (validSubs.length === 0) {
+        await supabase.from('user_state').delete().eq('user_id', 'demo_user_001').eq('key', 'pushSub');
+      } else {
+        await supabase.from('user_state').upsert(
+          { user_id: 'demo_user_001', key: 'pushSub', value: validSubs },
+          { onConflict: 'user_id,key' }
+        );
+      }
+    }
+
+    if (successCount === 0) {
       return NextResponse.json(
-        { success: false, error: '推送凭证已过期，请重新在网页上开启推送授权后再试。' },
+        { success: false, error: '所有凭据均已过期，请重新开启推送授权。' },
         { status: 410 }
       );
     }
+
+    return NextResponse.json({ success: true, message: `测试通知已向 ${successCount} 个设备发出！` });
+  } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

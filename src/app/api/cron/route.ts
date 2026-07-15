@@ -118,22 +118,44 @@ export async function GET(request: Request) {
         body: notificationsToSend.join('\n'),
       });
 
-      try {
-        await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
-        pushedCount++;
-        
-        // 记录今天已推送，防止重复打扰
+      const pushSubsArray = Array.isArray(pushSub) ? pushSub : [pushSub];
+      let userSuccessCount = 0;
+      let expiredEndpoints = new Set<string>();
+
+      for (const sub of pushSubsArray) {
+        if (!sub?.endpoint) continue;
+        try {
+          await webpush.sendNotification(sub as webpush.PushSubscription, payload);
+          userSuccessCount++;
+          pushedCount++;
+        } catch (error: any) {
+          if (error.statusCode === 410 || error.statusCode === 404) {
+            expiredEndpoints.add(sub.endpoint);
+          } else {
+            console.error(`Push failed for user ${userId} endpoint ${sub.endpoint}:`, error);
+          }
+        }
+      }
+
+      // 清理过期凭据并保存有效凭据
+      if (expiredEndpoints.size > 0) {
+        const validSubs = pushSubsArray.filter((sub: any) => !expiredEndpoints.has(sub.endpoint));
+        if (validSubs.length === 0) {
+          await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
+        } else {
+          await supabase.from('user_state').upsert(
+            { user_id: userId, key: 'pushSub', value: validSubs },
+            { onConflict: 'user_id,key' }
+          );
+        }
+      }
+
+      // 只要有一个设备成功，就记录今天已推送，防止重复打扰
+      if (userSuccessCount > 0) {
         await supabase.from('user_state').upsert(
           { user_id: userId, key: 'lastNotifiedDate', value: todayStr },
           { onConflict: 'user_id,key' }
         );
-      } catch (error: any) {
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          // 凭证过期，清理无效订阅
-          await supabase.from('user_state').delete().eq('user_id', userId).eq('key', 'pushSub');
-        } else {
-          console.error(`Push failed for user ${userId}:`, error);
-        }
       }
     }
 

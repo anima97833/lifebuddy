@@ -59,12 +59,18 @@ export function PushNotificationSetup() {
         return;
       }
 
-      console.log('[PushSetup] 9. 向浏览器 PushManager 发起订阅请求...');
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-      });
+      console.log('[PushSetup] 9. 获取现有订阅或向浏览器 PushManager 发起新订阅请求...');
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        });
+      }
+      
       console.log('[PushSetup] 10. 获取到 Push Subscription 对象:', subscription);
+      console.log('[PushSetup] -> 当前设备 endpoint:', subscription.endpoint);
 
       console.log('[PushSetup] 11. 将 Subscription 发送至后端...');
       const response = await fetch('/api/push-subscribe', {
@@ -76,6 +82,11 @@ export function PushNotificationSetup() {
       });
       
       const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || '后端保存凭证失败');
+      }
+
       console.log('[PushSetup] 12. 后端响应:', result);
 
       console.log('[PushSetup] 推送订阅成功，已同步至后端!');
