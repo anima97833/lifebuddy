@@ -18,22 +18,16 @@ export function PushNotificationSetup() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
 
-  useEffect(() => {
-    // 检测是否支持 Service Worker 和 Push Manager
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      // 如果还没授权，就弹出自定义的授权提示 UI
-      if (Notification.permission === 'default') {
-        setShowPrompt(true);
-      } else if (Notification.permission === 'granted') {
-        // 静默同步订阅到服务器，防止因为覆盖导致手机端凭据丢失
-        syncSubscription();
-      }
-    }
-  }, []);
-
   const syncSubscription = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // 先确保 SW 已注册
+      let registration = await navigator.serviceWorker.getRegistration('/');
+      if (!registration) {
+        registration = await navigator.serviceWorker.register('/sw.js');
+      }
+      await navigator.serviceWorker.ready;
+      registration = await navigator.serviceWorker.getRegistration('/')!;
+
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
@@ -47,17 +41,33 @@ export function PushNotificationSetup() {
       }
 
       if (subscription) {
-        await fetch('/api/push-subscribe', {
+        const res = await fetch('/api/push-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(subscription)
         });
-        console.log('[PushSetup] 静默同步推送订阅完成');
+        const json = await res.json();
+        console.log('[PushSetup] 静默同步推送订阅完成', json);
+      } else {
+        console.warn('[PushSetup] 静默同步：未能获取到有效 subscription');
       }
     } catch (e) {
       console.error('[PushSetup] 静默同步订阅失败:', e);
     }
   };
+
+  useEffect(() => {
+    // 检测是否支持 Service Worker 和 Push Manager
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      // 如果还没授权，就弹出自定义的授权提示 UI
+      if (Notification.permission === 'default') {
+        setShowPrompt(true);
+      } else if (Notification.permission === 'granted') {
+        // 静默同步订阅到服务器，防止因为覆盖导致手机端凭据丢失
+        syncSubscription();
+      }
+    }
+  }, []);
 
   const handleSubscribe = async () => {
     console.log('[PushSetup] 1. 开始订阅流程');
