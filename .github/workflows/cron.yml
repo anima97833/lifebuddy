@@ -1,0 +1,21 @@
+name: LifeCanvas Cron Trigger
+on:
+  schedule:
+    # 每 15 分钟触发一次
+    - cron: '*/15 * * * *'
+  # 允许在 Actions 面板上手动点击执行
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Vercel Cron API
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          # 请确保将其替换为您真实的 Vercel 生产环境域名
+          API_URL: ${{ secrets.VERCEL_CRON_URL || 'https://buddy.vercel.app/api/cron' }}
+        run: |
+          echo "Pinging $API_URL..."
+          curl -i -X GET "$API_URL" \
+            -H "Authorization: Bearer $CRON_SECRET"
