@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
+
 
 // 用于将 VAPID 公钥从 Base64 转换为 Uint8Array 的工具函数
 function urlBase64ToUint8Array(base64String: string) {
@@ -20,6 +23,24 @@ export function PushNotificationSetup() {
 
   const syncSubscription = async () => {
     try {
+      if (Capacitor.isNativePlatform()) {
+        // --- 原生 APP (Capacitor) 环境 ---
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+        if (permStatus.receive !== 'granted') {
+          console.warn('[PushSetup] 原生环境通知权限未授予');
+          return;
+        }
+
+        // 注册原生推送
+        await PushNotifications.register();
+        // 注册结果将由 useEffect 中的 listener 捕获并发送到服务器
+        return;
+      }
+
+      // --- 网页 (Web Push) 环境 ---
       // 先确保 SW 已注册
       let registration = await navigator.serviceWorker.getRegistration('/');
       if (!registration) {
@@ -51,9 +72,9 @@ export function PushNotificationSetup() {
           body: JSON.stringify(subscription)
         });
         const json = await res.json();
-        console.log('[PushSetup] 静默同步推送订阅完成', json);
+        console.log('[PushSetup] 静默同步网页推送订阅完成', json);
       } else {
-        console.warn('[PushSetup] 静默同步：未能获取到有效 subscription');
+        console.warn('[PushSetup] 静默同步：未能获取到有效网页 subscription');
       }
     } catch (e) {
       console.error('[PushSetup] 静默同步订阅失败:', e);
@@ -61,7 +82,43 @@ export function PushNotificationSetup() {
   };
 
   useEffect(() => {
-    // 检测是否支持 Service Worker 和 Push Manager
+    if (Capacitor.isNativePlatform()) {
+      // 原生环境：注册监听器
+      PushNotifications.addListener('registration', async (token) => {
+        console.log('[PushSetup] 获取到原生 FCM Token:', token.value);
+        // 构建兼容旧版格式的 subscription 对象
+        const subscription = {
+          endpoint: `fcm-native-${token.value}`, // 加一个前缀标识
+          keys: { auth: '', p256dh: '' },
+          token: token.value // 把原始 token 存下来备用
+        };
+        try {
+          const res = await fetch('/api/push-subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+          });
+          const json = await res.json();
+          console.log('[PushSetup] 原生 Token 已同步到服务器', json);
+        } catch (err) {
+          console.error('[PushSetup] 原生 Token 同步失败', err);
+        }
+      });
+
+      PushNotifications.addListener('registrationError', (error: any) => {
+        console.error('[PushSetup] 原生注册失败:', JSON.stringify(error));
+      });
+
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('[PushSetup] 原生前台收到推送:', notification);
+      });
+
+      // 检查权限并可能触发上方的 registration listener
+      syncSubscription();
+      return;
+    }
+
+    // 检测是否支持 Service Worker 和 Push Manager (Web 环境)
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       // 如果还没授权，就弹出自定义的授权提示 UI
       if (Notification.permission === 'default') {
@@ -77,6 +134,21 @@ export function PushNotificationSetup() {
     console.log('[PushSetup] 1. 开始订阅流程');
     setIsSubscribing(true);
     try {
+      if (Capacitor.isNativePlatform()) {
+        console.log('[PushSetup] 2. 请求原生系统通知权限...');
+        const permStatus = await PushNotifications.requestPermissions();
+        if (permStatus.receive === 'granted') {
+          console.log('[PushSetup] 3. 原生通知权限已授予，正在注册...');
+          await PushNotifications.register();
+          setShowPrompt(false);
+        } else {
+          console.warn('[PushSetup] 原生通知权限被拒绝');
+        }
+        setIsSubscribing(false);
+        return;
+      }
+
+      // Web 推送逻辑
       console.log('[PushSetup] 2. 请求系统通知权限...');
       const permission = await Notification.requestPermission();
       console.log(`[PushSetup] 3. 通知权限结果: ${permission}`);
@@ -87,23 +159,10 @@ export function PushNotificationSetup() {
         return;
       }
 
-      let registration = await navigator.serviceWorker.getRegistration('/');
-      if (!registration) {
-        console.log('[PushSetup] 4. 未发现已有 Registration，开始注册 Service Worker (/sw.js)...');
-        registration = await navigator.serviceWorker.register('/sw.js');
-      } else {
-        console.log('[PushSetup] 4. 发现已有 Registration，复用现有的 Service Worker。');
-      }
-      
-      console.log('[PushSetup] 5. Service Worker 注册成功:', registration);
-      
-      console.log('[PushSetup] 6. 等待 Service Worker 处于 active 状态...');
-      await navigator.serviceWorker.ready;
-      console.log('[PushSetup] 7. Service Worker 已 ready');
+      console.log('[PushSetup] 4. 等待 Service Worker Ready...');
+      const registration = await navigator.serviceWorker.ready;
 
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      console.log('[PushSetup] 8. 获取到的 VAPID 公钥:', publicVapidKey ? '存在' : '缺失 (undefined)');
-      
       if (!publicVapidKey) {
         console.warn('[PushSetup] 尚未配置 NEXT_PUBLIC_VAPID_PUBLIC_KEY 环境变量');
         setShowPrompt(false);
