@@ -7,7 +7,7 @@ import { SkillBoard } from '@/components/SkillBoard';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { JobBoard } from '@/components/JobBoard';
 import { SummaryBoard } from '@/components/SummaryBoard';
-import { PushNotificationSetup } from '@/components/PushNotificationSetup';
+// import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { useSyncState } from '@/hooks/useSyncState';
 
 export default function Home() {
@@ -46,7 +46,7 @@ export default function Home() {
 
             {/* 交互按钮展示色板 */}
             <div className="mt-4 flex gap-4 w-full">
-              <button onClick={() => setShowDashboard(true)} className="flex-1 py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase hover:border-muji-accent hover:text-muji-accent transition-all flex items-center justify-center gap-2">
+              <button type="button" onClick={(e) => { e.preventDefault(); setShowDashboard(true); }} className="flex-1 py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase hover:border-muji-accent hover:text-muji-accent transition-all flex items-center justify-center gap-2">
                 <span className="material-symbols-outlined text-[16px]">dashboard</span>
                 Enter
               </button>
@@ -58,7 +58,7 @@ export default function Home() {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                   title="设置打卡提醒时间" 
                 />
-                <button className="w-full py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase group-hover:border-muji-alert group-hover:text-muji-alert transition-all flex items-center justify-center gap-2 relative z-0">
+                <button type="button" className="w-full py-2.5 px-4 bg-muji-bg border border-muji-text/20 rounded-sm text-xs tracking-widest uppercase group-hover:border-muji-alert group-hover:text-muji-alert transition-all flex items-center justify-center gap-2 relative z-0">
                   <span className="material-symbols-outlined text-[16px]">notifications</span>
                   {notificationTime}
                 </button>
@@ -74,7 +74,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-background text-on-background font-body-md overflow-hidden w-full relative z-10 fade-enter-active">
-      <PushNotificationSetup />
+      {/* <PushNotificationSetup /> */}
       <Sidebar 
         sidebarOpen={sidebarOpen} 
         setSidebarOpen={setSidebarOpen} 
