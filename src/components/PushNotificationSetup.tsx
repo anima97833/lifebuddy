@@ -26,21 +26,25 @@ export function PushNotificationSetup() {
         registration = await navigator.serviceWorker.register('/sw.js');
       }
       await navigator.serviceWorker.ready;
-      registration = await navigator.serviceWorker.getRegistration('/')!;
+      registration = (await navigator.serviceWorker.getRegistration('/'))!;
 
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
+        // 本地 subscription 已失效，重新订阅获取新 token
         const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         if (publicVapidKey) {
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
           });
+          console.log('[PushSetup] 本地 subscription 已失效，已重新生成新 token');
         }
       }
 
       if (subscription) {
+        // 每次都强制上传，服务器端会按 endpoint 去重，
+        // 这样即使服务器侧把过期的 token 删除了，下次开页面也能自动补回来
         const res = await fetch('/api/push-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
