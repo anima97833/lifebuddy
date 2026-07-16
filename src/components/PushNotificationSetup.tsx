@@ -87,14 +87,13 @@ export function PushNotificationSetup() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       try {
-        // 原生环境：注册监听器
+        // 原生环境：只需注册监听器，不要直接请求权限！
         PushNotifications.addListener('registration', async (token) => {
           console.log('[PushSetup] 获取到原生 FCM Token:', token.value);
-          // 构建兼容旧版格式的 subscription 对象
           const subscription = {
-            endpoint: `fcm-native-${token.value}`, // 加一个前缀标识
+            endpoint: `fcm-native-${token.value}`,
             keys: { auth: '', p256dh: '' },
-            token: token.value // 把原始 token 存下来备用
+            token: token.value
           };
           try {
             const res = await fetch('/api/push-subscribe', {
@@ -102,8 +101,7 @@ export function PushNotificationSetup() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(subscription)
             });
-            const json = await res.json();
-            console.log('[PushSetup] 原生 Token 已同步到服务器', json);
+            console.log('[PushSetup] 原生 Token 已同步到服务器', await res.json());
           } catch (err) {
             console.error('[PushSetup] 原生 Token 同步失败', err);
           }
@@ -116,12 +114,18 @@ export function PushNotificationSetup() {
         PushNotifications.addListener('pushNotificationReceived', (notification) => {
           console.log('[PushSetup] 原生前台收到推送:', notification);
         });
+
+        // 检查是否已经授权，如果已授权则静默同步，未授权则弹窗
+        PushNotifications.checkPermissions().then(perm => {
+          if (perm.receive === 'granted') {
+            syncSubscription();
+          } else {
+            setShowPrompt(true); // 让用户手动点击按钮触发
+          }
+        });
       } catch (e) {
         console.error('[PushSetup] 添加推送监听器失败 (可能是 Firebase 未配置):', e);
       }
-
-      // 检查权限并可能触发上方的 registration listener
-      syncSubscription();
       return;
     }
 
