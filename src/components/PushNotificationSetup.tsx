@@ -130,7 +130,8 @@ export function PushNotificationSetup() {
     }
 
     // 检测是否支持 Service Worker 和 Push Manager (Web 环境)
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    // 注意：必须先检查 typeof Notification，否则在 Android WebView 中会抗出 ReferenceError
+    if ('serviceWorker' in navigator && 'PushManager' in window && typeof Notification !== 'undefined') {
       // 如果还没授权，就弹出自定义的授权提示 UI
       if (Notification.permission === 'default') {
         setShowPrompt(true);
@@ -244,7 +245,7 @@ export function PushNotificationSetup() {
   const [isDialOpen, setIsDialOpen] = useState(false);
 
   if (!showPrompt) {
-    if (typeof window !== 'undefined' && Notification.permission === 'granted') {
+    if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       return (
         <div className="fixed bottom-4 right-4 z-[9999]">
           {/* Radial Menu Items */}
