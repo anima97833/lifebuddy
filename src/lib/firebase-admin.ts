@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { getMessaging } from 'firebase-admin/messaging';
 
 if (!admin.apps.length) {
   try {
@@ -15,4 +16,4 @@ if (!admin.apps.length) {
   }
 }
 
-export { admin };
+export { admin, getMessaging };

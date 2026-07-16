@@ -36,7 +36,7 @@ export async function POST() {
       body: '推送链路完全通畅，您的 LifeCanvas 守护提醒已就位！',
     });
 
-    const { admin } = await import('@/lib/firebase-admin');
+    const { getMessaging } = await import('@/lib/firebase-admin');
 
     for (const pushSub of pushSubs) {
       if (!pushSub?.endpoint) continue;
@@ -47,7 +47,7 @@ export async function POST() {
         if (pushSub.endpoint.startsWith('fcm-native-')) {
           // 发送 FCM 推送
           const fcmToken = pushSub.endpoint.replace('fcm-native-', '');
-          await admin.messaging().send({
+          await getMessaging().send({
             token: fcmToken,
             notification: {
               title: '🎉 测试成功！',
