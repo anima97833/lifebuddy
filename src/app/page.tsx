@@ -7,7 +7,7 @@ import { SkillBoard } from '@/components/SkillBoard';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { JobBoard } from '@/components/JobBoard';
 import { SummaryBoard } from '@/components/SummaryBoard';
-// import { PushNotificationSetup } from '@/components/PushNotificationSetup';
+import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { useSyncState } from '@/hooks/useSyncState';
 
 export default function Home() {
@@ -74,7 +74,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-background text-on-background font-body-md overflow-hidden w-full relative z-10 fade-enter-active">
-      {/* <PushNotificationSetup /> */}
+      <PushNotificationSetup />
       <Sidebar 
         sidebarOpen={sidebarOpen} 
         setSidebarOpen={setSidebarOpen} 

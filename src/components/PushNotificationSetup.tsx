@@ -24,21 +24,21 @@ export function PushNotificationSetup() {
   const syncSubscription = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // --- 原生 APP (Capacitor) 环境 ---
-        // 临时禁用原生推送逻辑，排查是否是此插件导致白屏/加载失败
-        /*
-        let permStatus = await PushNotifications.checkPermissions();
-        if (permStatus.receive === 'prompt') {
-          permStatus = await PushNotifications.requestPermissions();
-        }
-        if (permStatus.receive !== 'granted') {
-          console.warn('[PushSetup] 原生环境通知权限未授予');
-          return;
-        }
+        try {
+          let permStatus = await PushNotifications.checkPermissions();
+          if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+          if (permStatus.receive !== 'granted') {
+            console.warn('[PushSetup] 原生环境通知权限未授予');
+            return;
+          }
 
-        // 注册原生推送
-        await PushNotifications.register();
-        */
+          // 注册原生推送
+          await PushNotifications.register();
+        } catch (err) {
+          console.error('[PushSetup] 注册原生推送出错 (可能是 Firebase 缺失):', err);
+        }
         return;
       }
 
@@ -86,35 +86,39 @@ export function PushNotificationSetup() {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      // 原生环境：注册监听器
-      PushNotifications.addListener('registration', async (token) => {
-        console.log('[PushSetup] 获取到原生 FCM Token:', token.value);
-        // 构建兼容旧版格式的 subscription 对象
-        const subscription = {
-          endpoint: `fcm-native-${token.value}`, // 加一个前缀标识
-          keys: { auth: '', p256dh: '' },
-          token: token.value // 把原始 token 存下来备用
-        };
-        try {
-          const res = await fetch('/api/push-subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(subscription)
-          });
-          const json = await res.json();
-          console.log('[PushSetup] 原生 Token 已同步到服务器', json);
-        } catch (err) {
-          console.error('[PushSetup] 原生 Token 同步失败', err);
-        }
-      });
+      try {
+        // 原生环境：注册监听器
+        PushNotifications.addListener('registration', async (token) => {
+          console.log('[PushSetup] 获取到原生 FCM Token:', token.value);
+          // 构建兼容旧版格式的 subscription 对象
+          const subscription = {
+            endpoint: `fcm-native-${token.value}`, // 加一个前缀标识
+            keys: { auth: '', p256dh: '' },
+            token: token.value // 把原始 token 存下来备用
+          };
+          try {
+            const res = await fetch('/api/push-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(subscription)
+            });
+            const json = await res.json();
+            console.log('[PushSetup] 原生 Token 已同步到服务器', json);
+          } catch (err) {
+            console.error('[PushSetup] 原生 Token 同步失败', err);
+          }
+        });
 
-      PushNotifications.addListener('registrationError', (error: any) => {
-        console.error('[PushSetup] 原生注册失败:', JSON.stringify(error));
-      });
+        PushNotifications.addListener('registrationError', (error: any) => {
+          console.error('[PushSetup] 原生注册失败:', JSON.stringify(error));
+        });
 
-      PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('[PushSetup] 原生前台收到推送:', notification);
-      });
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          console.log('[PushSetup] 原生前台收到推送:', notification);
+        });
+      } catch (e) {
+        console.error('[PushSetup] 添加推送监听器失败 (可能是 Firebase 未配置):', e);
+      }
 
       // 检查权限并可能触发上方的 registration listener
       syncSubscription();
