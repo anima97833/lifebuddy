@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Sidebar } from '@/components/Sidebar';
 import { RitualBoard } from '@/components/RitualBoard';
 import { SkillBoard } from '@/components/SkillBoard';
@@ -9,12 +10,41 @@ import { JobBoard } from '@/components/JobBoard';
 import { SummaryBoard } from '@/components/SummaryBoard';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { useSyncState } from '@/hooks/useSyncState';
+import {
+  requestLocalNotificationPermission,
+  scheduleDailyReminder,
+  scheduleSubscriptionReminders,
+} from '@/lib/LocalNotificationService';
 
 export default function Home() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [activeTab, setActiveTab] = useState('todo');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [notificationTime, setNotificationTime] = useSyncState('notificationTime', '20:00');
+  const [subscriptions] = useSyncState<any[]>('subscriptions', []);
+  const [rituals] = useSyncState<any[]>('rituals', []);
+
+  // 每当提醒时间或订阅数据变化时，重新安排本地通知（只在原生 APP 中运行）
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const setup = async () => {
+      const granted = await requestLocalNotificationPermission();
+      if (!granted) return;
+      // 1. 重新安排每日提醒
+      const pendingRituals = Array.isArray(rituals)
+        ? rituals.filter((r: any) => {
+            const today = new Date().toISOString().slice(0, 10);
+            return !r.lastCheckInDate || r.lastCheckInDate !== today;
+          }).length
+        : 0;
+      await scheduleDailyReminder(notificationTime, pendingRituals);
+      // 2. 重新安排订阅到期提醒
+      if (Array.isArray(subscriptions)) {
+        await scheduleSubscriptionReminders(subscriptions);
+      }
+    };
+    setup();
+  }, [notificationTime, subscriptions, rituals]);
 
   if (!showDashboard) {
     return (
