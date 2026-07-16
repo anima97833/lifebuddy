@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   server: {
     // 替换为您的 Vercel 线上地址
-    url: 'https://lifebuddy-demo.vercel.app', // 如果有你自己的自定义域名或具体的 vercel 分配域名，可以在这改
+    url: 'https://lifebuddy-eosin.vercel.app', 
     cleartext: true
   }
 };
