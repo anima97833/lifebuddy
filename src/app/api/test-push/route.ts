@@ -36,14 +36,32 @@ export async function POST() {
       body: '推送链路完全通畅，您的 LifeCanvas 守护提醒已就位！',
     });
 
+    const { admin } = await import('@/lib/firebase-admin');
+
     for (const pushSub of pushSubs) {
       if (!pushSub?.endpoint) continue;
       try {
         console.log('[Test-Push] 发送目标:', pushSub.endpoint);
-        await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
-        successCount++;
+        
+        // 区分是 Web Push 还是 原生 FCM
+        if (pushSub.endpoint.startsWith('fcm-native-')) {
+          // 发送 FCM 推送
+          const fcmToken = pushSub.endpoint.replace('fcm-native-', '');
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: '🎉 测试成功！',
+              body: '推送链路完全通畅，您的 LifeCanvas 守护提醒已就位！',
+            }
+          });
+          successCount++;
+        } else {
+          // 发送 Web Push
+          await webpush.sendNotification(pushSub as webpush.PushSubscription, payload);
+          successCount++;
+        }
       } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) {
+        if (err.statusCode === 410 || err.statusCode === 404 || err.code === 'messaging/registration-token-not-registered') {
           expiredEndpoints.add(pushSub.endpoint);
         } else {
           console.error('Test push failed for endpoint:', pushSub.endpoint, err);

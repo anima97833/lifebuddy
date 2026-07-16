@@ -122,14 +122,29 @@ export async function GET(request: Request) {
       let userSuccessCount = 0;
       let expiredEndpoints = new Set<string>();
 
+      const { admin } = await import('@/lib/firebase-admin');
+
       for (const sub of pushSubsArray) {
         if (!sub?.endpoint) continue;
         try {
-          await webpush.sendNotification(sub as webpush.PushSubscription, payload);
-          userSuccessCount++;
-          pushedCount++;
+          if (sub.endpoint.startsWith('fcm-native-')) {
+            const fcmToken = sub.endpoint.replace('fcm-native-', '');
+            await admin.messaging().send({
+              token: fcmToken,
+              notification: {
+                title: 'LifeCanvas 守护提醒',
+                body: notificationsToSend.join('\n'),
+              }
+            });
+            userSuccessCount++;
+            pushedCount++;
+          } else {
+            await webpush.sendNotification(sub as webpush.PushSubscription, payload);
+            userSuccessCount++;
+            pushedCount++;
+          }
         } catch (error: any) {
-          if (error.statusCode === 410 || error.statusCode === 404) {
+          if (error.statusCode === 410 || error.statusCode === 404 || error.code === 'messaging/registration-token-not-registered') {
             expiredEndpoints.add(sub.endpoint);
           } else {
             console.error(`Push failed for user ${userId} endpoint ${sub.endpoint}:`, error);
