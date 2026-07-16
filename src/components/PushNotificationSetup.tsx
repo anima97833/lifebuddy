@@ -25,6 +25,8 @@ export function PushNotificationSetup() {
     try {
       if (Capacitor.isNativePlatform()) {
         // --- 原生 APP (Capacitor) 环境 ---
+        // 临时禁用原生推送逻辑，排查是否是此插件导致白屏/加载失败
+        /*
         let permStatus = await PushNotifications.checkPermissions();
         if (permStatus.receive === 'prompt') {
           permStatus = await PushNotifications.requestPermissions();
@@ -36,9 +38,10 @@ export function PushNotificationSetup() {
 
         // 注册原生推送
         await PushNotifications.register();
-        // 注册结果将由 useEffect 中的 listener 捕获并发送到服务器
+        */
         return;
       }
+
 
       // --- 网页 (Web Push) 环境 ---
       // 先确保 SW 已注册
