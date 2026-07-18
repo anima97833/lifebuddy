@@ -21,14 +21,15 @@ interface Skill {
 interface SkillCategory {
   id: number;
   name: string;
-  progress: number;
+  targetHours: number; // 目标时长，用于计算进度百分比
   last: string;
+  // progress 字段废弃，由系统动态计算
 }
 
 export function SkillBoard() {
   const [skillCategories, setSkillCategories] = useSyncState<SkillCategory[]>('skillCategories', [
-    { id: 1, name: '数字插画', progress: 65, last: '2天前' },
-    { id: 2, name: '品牌策略', progress: 92, last: '今天' }
+    { id: 1, name: '数字插画', targetHours: 100, last: '2天前' },
+    { id: 2, name: '品牌策略', targetHours: 100, last: '今天' }
   ]);
 
   const [skills, setSkills] = useSyncState<Skill[]>('skills', [
@@ -45,7 +46,7 @@ export function SkillBoard() {
   ]);
 
   const addSkillCategory = () => {
-    setSkillCategories(prev => [...prev, { id: Date.now(), name: '新种类', progress: 0, last: '刚刚' }]);
+    setSkillCategories(prev => [...prev, { id: Date.now(), name: '新种类', targetHours: 100, last: '刚刚' }]);
   };
 
   const removeSkillCategory = (index: number) => {
@@ -57,8 +58,8 @@ export function SkillBoard() {
     });
   };
 
-  const calculateCategoryTime = (catId: number | null) => {
-    if (!skills) return "0.0";
+  const getCategoryTimeInfo = (catId: number | null) => {
+    if (!skills) return { totalMinutes: 0, hoursStr: "0.0" };
     let totalMinutes = 0;
     skills.forEach(skill => {
       if (skill.categoryId === catId) {
@@ -67,7 +68,7 @@ export function SkillBoard() {
         });
       }
     });
-    return (totalMinutes / 60).toFixed(1);
+    return { totalMinutes, hoursStr: (totalMinutes / 60).toFixed(1) };
   };
 
   const addSkill = () => {
@@ -138,26 +139,37 @@ export function SkillBoard() {
                   }}
                   className="font-label-md text-label-md text-on-surface bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none w-32 transition-colors"
                 />
-                <span className="font-label-sm text-label-sm text-on-surface-variant/60 bg-transparent text-right w-24">
-                  累计 {calculateCategoryTime(cat.id)}h
-                </span>
+                <div className="font-label-sm text-label-sm text-on-surface-variant/60 bg-transparent text-right flex items-center justify-end gap-1">
+                  <span>累计 {getCategoryTimeInfo(cat.id).hoursStr}h /</span>
+                  <input 
+                    type="number"
+                    min="1"
+                    value={cat.targetHours || 100}
+                    onChange={e => {
+                      setSkillCategories(prev => {
+                        const copy = [...prev];
+                        copy[index].targetHours = Number(e.target.value);
+                        return copy;
+                      });
+                    }}
+                    className="w-10 bg-transparent border-b border-transparent hover:border-outline-variant/30 focus:border-primary focus:outline-none transition-colors text-right"
+                    title="设置目标时长(小时)"
+                  />
+                  <span>h</span>
+                </div>
               </div>
               <div className="w-full h-2 bg-background rounded-full overflow-hidden flex items-center">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={cat.progress}
-                  onChange={e => {
-                    setSkillCategories(prev => {
-                      const copy = [...prev];
-                      copy[index].progress = Number(e.target.value);
-                      return copy;
-                    });
-                  }}
-                  className="w-full h-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-0 [&::-webkit-slider-thumb]:h-0" 
-                  style={{ background: `linear-gradient(to right, var(--color-primary-container) ${cat.progress}%, transparent ${cat.progress}%)` }}
-                />
+                {(() => {
+                  const { totalMinutes } = getCategoryTimeInfo(cat.id);
+                  const targetMins = (cat.targetHours || 100) * 60;
+                  const calculatedProgress = Math.min(100, Math.max(0, (totalMinutes / targetMins) * 100));
+                  return (
+                    <div 
+                      className="h-full bg-primary-container transition-all duration-500 ease-out" 
+                      style={{ width: `${calculatedProgress}%` }}
+                    />
+                  );
+                })()}
               </div>
               <div className="flex justify-between">
                 <input 

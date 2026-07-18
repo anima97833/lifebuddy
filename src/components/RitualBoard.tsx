@@ -10,6 +10,7 @@ interface Ritual {
   target: number;
   color: string;
   lastCheckInDate: string;
+  history?: ('hit' | 'miss')[]; // 记录每一次打卡（hit）或漏打（miss）
 }
 
 export function RitualBoard() {
@@ -49,10 +50,36 @@ export function RitualBoard() {
   const checkInRitual = (index: number) => {
     setRituals((prev) => {
       const copy = [...prev];
-      if (copy[index].completed < copy[index].target) {
-        copy[index].completed++;
-        copy[index].lastCheckInDate = new Date().toLocaleDateString();
+      const ritual = copy[index];
+      if (ritual.completed >= ritual.target) return copy;
+
+      const today = new Date().toLocaleDateString();
+      const yesterdayDate = new Date();
+      yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+      const yesterday = yesterdayDate.toLocaleDateString();
+
+      const history: ('hit' | 'miss')[] = ritual.history ? [...ritual.history] : [];
+
+      // 如果上次打卡日期存在，且不是昨天，也不是今天（即昨天漏打了）
+      // 则在本次打卡圆点前插入一个 'miss'
+      if (
+        ritual.lastCheckInDate &&
+        ritual.lastCheckInDate !== yesterday &&
+        ritual.lastCheckInDate !== today &&
+        history.length < ritual.target
+      ) {
+        history.push('miss');
       }
+
+      // 记录今日打卡
+      history.push('hit');
+
+      copy[index] = {
+        ...ritual,
+        completed: ritual.completed + 1,
+        lastCheckInDate: today,
+        history,
+      };
       return copy;
     });
   };
@@ -159,15 +186,34 @@ export function RitualBoard() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {Array.from({ length: ritual.target || 0 }).map((_, n) => (
-                    <div 
-                      key={n} 
+                  {/* 按历史记录渲染：hit=深色，miss=白圈（漏打，永久留空）*/}
+                  {(ritual.history && ritual.history.length > 0
+                    ? ritual.history
+                    : Array.from({ length: ritual.completed || 0 }, () => 'hit' as const)
+                  ).map((h, n) => (
+                    <div
+                      key={n}
+                      title={h === 'hit' ? '已打卡' : '漏打'}
                       className={`w-4 h-4 rounded-full dot-anim transition-colors ${
-                        n < (ritual.completed || 0) 
-                          ? (ritual.color === 'primary' ? 'bg-primary-container' : 'bg-outline-variant') 
+                        h === 'hit'
+                          ? (ritual.color === 'primary' ? 'bg-primary-container' : 'bg-outline-variant')
                           : (ritual.color === 'primary' ? 'border border-primary-container/30' : 'border border-outline-variant')
                       }`}
-                    ></div>
+                    />
+                  ))}
+                  {/* 剩余未达成的空圆 */}
+                  {Array.from({
+                    length: Math.max(
+                      0,
+                      ritual.target - (ritual.history ? ritual.history.length : (ritual.completed || 0))
+                    )
+                  }).map((_, n) => (
+                    <div
+                      key={`future-${n}`}
+                      className={`w-4 h-4 rounded-full dot-anim transition-colors ${
+                        ritual.color === 'primary' ? 'border border-primary-container/30' : 'border border-outline-variant'
+                      }`}
+                    />
                   ))}
                 </div>
               </div>

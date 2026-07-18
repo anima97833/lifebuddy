@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Capacitor } from '@capacitor/core';
 import { Sidebar } from '@/components/Sidebar';
 import { RitualBoard } from '@/components/RitualBoard';
@@ -123,10 +124,10 @@ export default function Home() {
             <h1 className="font-headline-md text-headline-md font-semibold text-primary cursor-pointer hover:opacity-80 transition-opacity hidden md:block" onClick={() => setShowDashboard(false)}>返回</h1>
           </div>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant/10">
+            <Link href="/collections" className="flex items-center gap-2 px-3 py-1 bg-surface-container-low hover:bg-surface-container-high transition-colors rounded-full border border-outline-variant/10 cursor-pointer">
               <div className="w-2 h-2 rounded-full bg-primary"></div>
-              <span className="font-label-sm text-label-sm">云端同步</span>
-            </div>
+              <span className="font-label-sm text-label-sm">收藏分布</span>
+            </Link>
           </div>
         </header>
         
