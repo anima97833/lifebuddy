@@ -245,6 +245,47 @@ export function PushNotificationSetup() {
 
   const [isDialOpen, setIsDialOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isDataSheetOpen, setIsDataSheetOpen] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const importFileRef = React.useRef<HTMLInputElement>(null);
+
+  const handleExport = () => {
+    const data: Record<string, unknown> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      try { data[key] = JSON.parse(localStorage.getItem(key) || ''); }
+      catch { data[key] = localStorage.getItem(key); }
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lifebuddy-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        Object.entries(data).forEach(([k, v]) => {
+          localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+        });
+        setImportMsg('✓ 导入成功，即将刷新页面...');
+        setTimeout(() => window.location.reload(), 1500);
+      } catch {
+        setImportMsg('⚠️ 文件格式错误，请选择正确的备份文件');
+        setTimeout(() => setImportMsg(''), 3000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   if (!showPrompt) {
     // 在原生 APP 中，Notification API 不存在，改用 Capacitor 平台检测
@@ -278,11 +319,11 @@ export function PushNotificationSetup() {
               <span className="material-symbols-outlined text-[18px]">smart_toy</span>
             </button>
 
-            {/* Item 3: Future Expansion (angle 180, straight left) */}
+            {/* Item 3: 数据管理 (angle 180, straight left) */}
             <button 
-              onClick={() => { alert('更多功能敬请期待...') }}
+              onClick={() => { setIsDataSheetOpen(true); setIsDialOpen(false); }}
               className={`absolute p-3 rounded-full bg-surface-container-high text-on-surface hover:bg-primary hover:text-white shadow-lg transition-all duration-300 delay-150 ${isDialOpen ? 'translate-x-[-72px]' : 'translate-x-0'} flex items-center justify-center`}
-              title="更多扩展"
+              title="数据管理"
               style={{ bottom: 0, right: 0 }}
             >
               <span className="material-symbols-outlined text-[18px]">more_horiz</span>
@@ -299,6 +340,72 @@ export function PushNotificationSetup() {
               filter_vintage
             </span>
           </button>
+
+          {/* ─── Bottom Sheet: 数据管理 ─── */}
+          {/* Backdrop */}
+          {isDataSheetOpen && (
+            <div
+              className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-[2px]"
+              onClick={() => setIsDataSheetOpen(false)}
+            />
+          )}
+          {/* Sheet */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-[9999] bg-white rounded-t-3xl shadow-2xl transition-all duration-400 ease-out ${
+              isDataSheetOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+            }`}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+
+            <div className="px-6 pb-8 pt-2">
+              <h3 className="text-[16px] font-bold text-gray-800 mb-1">数据管理</h3>
+              <p className="text-[12px] text-gray-400 mb-5">导出备份文件可防止网页更新时数据丢失</p>
+
+              {/* Export */}
+              <button
+                onClick={handleExport}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-green-50 border border-gray-100 hover:border-green-200 transition-all group mb-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors flex-shrink-0">
+                  <span className="material-symbols-outlined text-[22px] text-green-700">download</span>
+                </div>
+                <div className="text-left">
+                  <div className="text-[15px] font-semibold text-gray-800">导出备份</div>
+                  <div className="text-[12px] text-gray-400">将全部数据打包为 JSON 文件下载</div>
+                </div>
+              </button>
+
+              {/* Import */}
+              <button
+                onClick={() => importFileRef.current?.click()}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-blue-50 border border-gray-100 hover:border-blue-200 transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors flex-shrink-0">
+                  <span className="material-symbols-outlined text-[22px] text-blue-700">upload</span>
+                </div>
+                <div className="text-left">
+                  <div className="text-[15px] font-semibold text-gray-800">导入恢复</div>
+                  <div className="text-[12px] text-gray-400">从 JSON 备份文件恢复全部数据</div>
+                </div>
+              </button>
+
+              {importMsg && (
+                <div className="mt-4 text-center text-[13px] font-medium text-green-600">{importMsg}</div>
+              )}
+            </div>
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleImport}
+          />
         </div>
       );
     }
