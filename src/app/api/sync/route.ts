@@ -8,8 +8,24 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get('key');
 
+  // 全量导出：不传 key 时返回该用户所有记录
   if (!key) {
-    return NextResponse.json({ error: 'Key is required' }, { status: 400 });
+    try {
+      const { data, error } = await supabase
+        .from('user_state')
+        .select('key, value')
+        .eq('user_id', USER_ID);
+
+      if (error) throw error;
+
+      const result: Record<string, unknown> = {};
+      (data || []).forEach((row: { key: string; value: unknown }) => {
+        result[row.key] = row.value;
+      });
+      return NextResponse.json({ data: result });
+    } catch (err: any) {
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    }
   }
 
   try {

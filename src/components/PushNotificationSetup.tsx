@@ -249,33 +249,78 @@ export function PushNotificationSetup() {
   const [importMsg, setImportMsg] = useState('');
   const importFileRef = React.useRef<HTMLInputElement>(null);
 
-  const handleExport = () => {
-    const data: Record<string, unknown> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      try { data[key] = JSON.parse(localStorage.getItem(key) || ''); }
-      catch { data[key] = localStorage.getItem(key); }
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      // 1. 从 Supabase 拉取所有云端数据（待办/仪式/订阅/成长/求职/收藏分布等）
+      const res = await fetch('/api/sync');
+      const result = await res.json();
+      const cloudData: Record<string, unknown> = result.data || {};
+
+      // 2. 合并 localStorage 里的本地配置（AI机器人配置/聊天记录等）
+      const localKeys = ['aiChatConfig', 'aiBots', 'aiActiveBotId', 'aiChatHistories'];
+      const localData: Record<string, unknown> = {};
+      localKeys.forEach(key => {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          try { localData[key] = JSON.parse(raw); }
+          catch { localData[key] = raw; }
+        }
+      });
+
+      const fullBackup = {
+        _meta: {
+          exportedAt: new Date().toISOString(),
+          version: '1.0',
+          source: 'LifeBuddy'
+        },
+        cloud: cloudData,
+        local: localData,
+      };
+
+      const blob = new Blob([JSON.stringify(fullBackup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lifebuddy-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('导出失败，请检查网络连接后重试');
+    } finally {
+      setIsExporting(false);
     }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `lifebuddy-backup-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string);
-        Object.entries(data).forEach(([k, v]) => {
+        const backup = JSON.parse(ev.target?.result as string);
+
+        // 1. 恢复云端数据（Supabase）
+        const cloudData: Record<string, unknown> = backup.cloud || backup; // 兼容旧版
+        const cloudRestorePromises = Object.entries(cloudData)
+          .filter(([k]) => !k.startsWith('_'))
+          .map(([k, v]) =>
+            fetch('/api/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: k, value: v }),
+            })
+          );
+        await Promise.all(cloudRestorePromises);
+
+        // 2. 恢复本地配置（localStorage）
+        const localData: Record<string, unknown> = backup.local || {};
+        Object.entries(localData).forEach(([k, v]) => {
           localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
         });
+
         setImportMsg('✓ 导入成功，即将刷新页面...');
         setTimeout(() => window.location.reload(), 1500);
       } catch {
@@ -367,14 +412,17 @@ export function PushNotificationSetup() {
               {/* Export */}
               <button
                 onClick={handleExport}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-green-50 border border-gray-100 hover:border-green-200 transition-all group mb-3"
+                disabled={isExporting}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gray-50 hover:bg-green-50 border border-gray-100 hover:border-green-200 transition-all group mb-3 disabled:opacity-60"
               >
                 <div className="w-10 h-10 rounded-xl bg-green-100 group-hover:bg-green-200 flex items-center justify-center transition-colors flex-shrink-0">
-                  <span className="material-symbols-outlined text-[22px] text-green-700">download</span>
+                  <span className={`material-symbols-outlined text-[22px] text-green-700 ${isExporting ? 'animate-spin' : ''}`}>
+                    {isExporting ? 'sync' : 'download'}
+                  </span>
                 </div>
                 <div className="text-left">
-                  <div className="text-[15px] font-semibold text-gray-800">导出备份</div>
-                  <div className="text-[12px] text-gray-400">将全部数据打包为 JSON 文件下载</div>
+                  <div className="text-[15px] font-semibold text-gray-800">{isExporting ? '正在导出...' : '导出备份'}</div>
+                  <div className="text-[12px] text-gray-400">包含云端所有数据 + AI配置</div>
                 </div>
               </button>
 
