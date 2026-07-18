@@ -58,7 +58,12 @@ export function RitualBoard() {
       yesterdayDate.setDate(yesterdayDate.getDate() - 1);
       const yesterday = yesterdayDate.toLocaleDateString();
 
-      const history: ('hit' | 'miss')[] = ritual.history ? [...ritual.history] : [];
+      const history: ('hit' | 'miss')[] = 
+      // 如果 history 已存在且有记录，直接继承
+      (ritual.history && ritual.history.length > 0)
+        ? [...ritual.history]
+        // 否则用当前 completed 数量预填充（兼容旧数据 / 手动设置的数值）
+        : Array.from({ length: ritual.completed || 0 }, () => 'hit' as const);
 
       // 如果上次打卡日期存在，且不是昨天，也不是今天（即昨天漏打了）
       // 则在本次打卡圆点前插入一个 'miss'

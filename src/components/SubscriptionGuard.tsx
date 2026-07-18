@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSyncState } from '@/hooks/useSyncState';
 
 interface Subscription {
@@ -61,6 +61,33 @@ export function SubscriptionGuard() {
       return total + (sub.cycle === '按年' ? amount / 12 : amount);
     }, 0).toFixed(2);
   }, [subscriptions]);
+
+  // 自动清理过期订阅
+  useEffect(() => {
+    if (!subscriptions) return;
+
+    let hasExpired = false;
+    const validSubscriptions = subscriptions.filter(sub => {
+      const daysLeft = getDaysUntilExpiry(sub.expiry);
+      // 如果已设置日期，并且剩余天数 <= 0，则判定为已过期
+      if (daysLeft !== null && daysLeft <= 0) {
+        hasExpired = true;
+        return false;
+      }
+      return true;
+    });
+
+    if (hasExpired) {
+      setSubscriptions(validSubscriptions);
+      // 修正当前页码，防止删空导致白屏
+      const newTotalPages = Math.ceil(validSubscriptions.length / 4);
+      if (subPage >= newTotalPages && newTotalPages > 0) {
+        setSubPage(newTotalPages - 1);
+      } else if (newTotalPages === 0) {
+        setSubPage(0);
+      }
+    }
+  }, [subscriptions, setSubscriptions, subPage]);
 
   return (
     <div className="space-y-12">

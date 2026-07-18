@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { AIChatAgent } from './AIChatAgent';
 
 
 // 用于将 VAPID 公钥从 Base64 转换为 Uint8Array 的工具函数
@@ -243,11 +244,13 @@ export function PushNotificationSetup() {
   };
 
   const [isDialOpen, setIsDialOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (!showPrompt) {
     if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       return (
         <div className="fixed bottom-4 right-4 z-[9999]">
+          <AIChatAgent isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
           {/* Radial Menu Items */}
           <div className={`absolute bottom-0 right-0 w-12 h-12 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${isDialOpen ? 'opacity-100' : 'opacity-0 pointer-events-none scale-50'}`}>
             {/* Item 1: Test Push (angle 90, straight up) */}
@@ -263,7 +266,7 @@ export function PushNotificationSetup() {
             
             {/* Item 2: AI Chat Placeholder (angle 135, up-left) */}
             <button 
-              onClick={() => { alert('AI聊天功能开发中...') }}
+              onClick={() => setIsChatOpen(!isChatOpen)}
               className={`absolute p-3 rounded-full bg-surface-container-high text-on-surface hover:bg-primary hover:text-white shadow-lg transition-all duration-300 delay-75 ${isDialOpen ? 'translate-x-[-51px] translate-y-[-51px]' : 'translate-x-0 translate-y-0'} flex items-center justify-center`}
               title="AI 智能助手"
               style={{ bottom: 0, right: 0 }}

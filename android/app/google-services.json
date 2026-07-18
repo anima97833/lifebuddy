@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "508057130732",
+    "project_id": "lifebuddy-955f4",
+    "storage_bucket": "lifebuddy-955f4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508057130732:android:abf9e83d60ceb035a737c9",
+        "android_client_info": {
+          "package_name": "com.lifecanvas.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEr4jubB2x3D6vWdBUcOwMmz1Vxo_wj-Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
