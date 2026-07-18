@@ -247,7 +247,11 @@ export function PushNotificationSetup() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   if (!showPrompt) {
-    if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    // 在原生 APP 中，Notification API 不存在，改用 Capacitor 平台检测
+    const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+    const hasWebNotif = typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted';
+
+    if (isNative || hasWebNotif) {
       return (
         <div className="fixed bottom-4 right-4 z-[9999]">
           <AIChatAgent isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
