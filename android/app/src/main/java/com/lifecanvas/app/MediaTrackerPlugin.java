@@ -43,8 +43,9 @@ public class MediaTrackerPlugin extends Plugin {
             boolean isPlaying = intent.getBooleanExtra(MediaWatcherService.EXTRA_IS_PLAYING, false);
             String title = intent.getStringExtra(MediaWatcherService.EXTRA_TITLE);
             String packageName = intent.getStringExtra(MediaWatcherService.EXTRA_PACKAGE_NAME);
+            boolean forceEnd = intent.getBooleanExtra("FORCE_END", false);
             
-            handleMediaStateChange(isPlaying, title, packageName);
+            handleMediaStateChange(isPlaying, title, packageName, forceEnd);
         }
     };
 
@@ -151,7 +152,7 @@ public class MediaTrackerPlugin extends Plugin {
         pendingSessions = new org.json.JSONArray();
     }
 
-    private void handleMediaStateChange(boolean isPlaying, String title, String packageName) {
+    private void handleMediaStateChange(boolean isPlaying, String title, String packageName, boolean forceEnd) {
         // Send state to JS
         JSObject data = new JSObject();
         data.put("isPlaying", isPlaying);
@@ -170,11 +171,11 @@ public class MediaTrackerPlugin extends Plugin {
             // Stopped playing
             long durationMs = System.currentTimeMillis() - sessionStartTime;
             
-            // Only save if duration > 5 seconds to filter out accidental skips
-            if (durationMs > 5000) {
+            // Only save if duration > 5 seconds, OR if it was a forced end (double tap)
+            if (durationMs > 5000 || forceEnd) {
                 JSObject sessionData = new JSObject();
                 sessionData.put("title", currentTitle);
-                sessionData.put("packageName", currentPackage);
+                sessionData.put("packageName", currentPackage != null ? currentPackage : "com.unknown");
                 sessionData.put("durationMs", durationMs);
                 sessionData.put("startTime", sessionStartTime);
                 
