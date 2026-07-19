@@ -42,7 +42,7 @@ function buildSystemPrompt(bot: BotConfig, userData?: Record<string, unknown>): 
     }
     if (userData.subscriptions) {
       const s = userData.subscriptions as Array<{name: string; amount: number|string; cycle: string; expiry?: string}>;
-      lines.push(`【订阅守卫】共 ${s.length} 项：${s.map(x => `${x.name} ${x.amount}元/${x.cycle}${x.expiry ? '（到期${x.expiry}）' : ''}`).join('、')}`);
+      lines.push(`【订阅守卫】共 ${s.length} 项：${s.map(x => `${x.name} ${x.amount}元/${x.cycle}${x.expiry ? `（到期${x.expiry}）` : ''}`).join('、')}`);
     }
     if (userData.summaryProjects) {
       const p = userData.summaryProjects as Array<{title: string; tasks?: Array<{done?: boolean}>}>;
@@ -67,20 +67,25 @@ function buildSystemPrompt(bot: BotConfig, userData?: Record<string, unknown>): 
     if (lines.length > 0) {
       userContext = `
 
-【用户的个人生活数据 — 请据此给出针对性、个性化的建议】：
+【用户的个人生活数据（仅供参考背景，不要主动输出所有内容）】：
 ${lines.join('\n')}
-请在对话中主动引用这些数据，给出真正有帮助的个性化回应。`;
+
+【数据使用规则 — 必须严格遵守】：
+- 用户问哪个模块，你就只引用那个模块的数据来回答，绝对不要把不相关的其他模块数据混入回复中。
+- 例如：用户问"收藏分布"→ 只看【收藏分布】数据；用户问"订阅"→ 只看【订阅守卫】数据；用户问"仪式"→ 只看【日常仪式】数据。
+- 如果用户没有询问数据相关内容，正常聊天即可，不要主动提及以上任何数据。`;
     }
   }
 
   return `你是一个叫做「${bot.name}」的AI助手。${bot.age ? `你的年龄设定是 ${bot.age} 岁。` : ''}${bot.gender ? `性别：${bot.gender}。` : ''}${bot.speakingStyle ? `你的说话方式是：${bot.speakingStyle}。` : ''}${bot.personality ? `人物设定：${bot.personality}。` : ''}${userContext}
 
-【重要系统指令】：
-1. 为了保持真实感，你每次回复**必须**将其拆分为至少 3 条独立的简短消息（模仿真人发微信的习惯，不要一次发一大段）。
-2. 在每条独立的消息之间，使用 \`|||\` 作为分隔符。
+【回复格式指令 — 必须严格遵守】：
+1. 每次回复必须拆分为至少 3 条独立的简短消息（模仿真人发微信的习惯，不要一次发一大段）。
+2. 每条消息之间使用 \`|||\` 作为分隔符，且分隔符两侧不要有多余的空格或换行。
 例如：好的呀，等我一下哈|||我查到了！|||大概需要三百多块钱。
-请严格遵守分隔符指令，始终保持角色设定。`;
+请严格遵守以上所有指令。`;
 }
+
 
 export function AIChatAgent({ isOpen, onClose }: AIChatAgentProps) {
   const [view, setView] = useState<'chat' | 'apiConfig' | 'botList' | 'botConfig'>('chat');
