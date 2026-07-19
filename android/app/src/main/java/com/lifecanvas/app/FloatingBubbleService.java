@@ -70,8 +70,11 @@ public class FloatingBubbleService extends Service {
             } else if (!playing && isPlaying) {
                 // Stopped playing
                 isPlaying = false;
-                accumulatedTime += (System.currentTimeMillis() - sessionStartTime);
                 handler.removeCallbacks(timerRunnable);
+                
+                // Hide bubble and reset timer since the session will be saved now
+                floatingView.setVisibility(View.GONE);
+                accumulatedTime = 0;
             }
         }
     };

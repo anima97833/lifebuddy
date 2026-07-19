@@ -107,11 +107,10 @@ public class MediaWatcherService extends Service {
     }
 
     private boolean isTargetApp(String packageName) {
-        return packageName.contains("bili") || 
-               packageName.contains("youtube") || 
-               packageName.contains("qqlive") || 
-               packageName.contains("qiyi") || 
-               packageName.contains("cloudmusic");
+        // We now track all media sessions so that if the user watches
+        // a course on a browser or an unknown app, it still gets captured.
+        // We exclude system UI or our own app if needed, but it's fine for now.
+        return true;
     }
 
     private void triggerUpdate(MediaController controller) {

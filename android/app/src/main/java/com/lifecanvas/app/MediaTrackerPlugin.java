@@ -159,8 +159,8 @@ public class MediaTrackerPlugin extends Plugin {
             // Stopped playing
             long durationMs = System.currentTimeMillis() - sessionStartTime;
             
-            // Only save if duration > 30 seconds to filter out skips
-            if (durationMs > 30000) {
+            // Only save if duration > 5 seconds to filter out accidental skips
+            if (durationMs > 5000) {
                 JSObject sessionData = new JSObject();
                 sessionData.put("title", currentTitle);
                 sessionData.put("packageName", currentPackage);
