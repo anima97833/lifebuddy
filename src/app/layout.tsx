@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { MediaTrackerSetup } from "@/components/MediaTrackerSetup";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -34,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className="bg-muji-bg text-muji-text font-sans min-h-screen selection:bg-muji-accent selection:text-white">
         {children}
+        <MediaTrackerSetup />
       </body>
     </html>
   );
