@@ -38,52 +38,66 @@ function buildSystemPrompt(bot: BotConfig, userData?: Record<string, unknown>): 
 
     if (userData.rituals) {
       const r = userData.rituals as Array<{name: string; totalDays: number; checkedDates?: string[]}>;
-      lines.push(`【日常仪式】共 ${r.length} 个：${r.map(x => `${x.name}（目标${x.totalDays}天，已打卡${(x.checkedDates||[]).length}天）`).join('、')}`);
+      lines.push(`【日常仪式】共 ${r.length} 个：${r.map(x => `「${x.name}」目标${x.totalDays}天，已打卡${(x.checkedDates||[]).length}天`).join('；')}`);
     }
     if (userData.subscriptions) {
       const s = userData.subscriptions as Array<{name: string; amount: number|string; cycle: string; expiry?: string}>;
-      lines.push(`【订阅守卫】共 ${s.length} 项：${s.map(x => `${x.name} ${x.amount}元/${x.cycle}${x.expiry ? `（到期${x.expiry}）` : ''}`).join('、')}`);
+      lines.push(`【订阅守卫】共 ${s.length} 项：${s.map(x => `「${x.name}」${x.amount}元/${x.cycle}${x.expiry ? `（到期${x.expiry}）` : ''}`).join('；')}`);
     }
     if (userData.summaryProjects) {
-      const p = userData.summaryProjects as Array<{title: string; tasks?: Array<{done?: boolean}>}>;
-      lines.push(`【成长/待办】共 ${p.length} 个项目：${p.map(x => {
-        const done = (x.tasks||[]).filter((t:{done?:boolean}) => t.done).length;
-        return `${x.title}（${done}/${(x.tasks||[]).length} 完成）`;
-      }).join('、')}`);
+      const p = userData.summaryProjects as Array<{title: string; tasks?: Array<{text?: string; content?: string; done?: boolean}>}>;
+      lines.push(`【成长/待办】共 ${p.length} 个：${p.map(x => {
+        const done = (x.tasks||[]).filter(t => t.done).length;
+        const taskList = (x.tasks||[]).map(t => `${t.text||t.content||''}(${t.done?'✓':'○'})`).join('、');
+        return `「${x.title}」进度${done}/${(x.tasks||[]).length}，任务：${taskList||'暂无'}`;
+      }).join('；')}`);
     }
     if (userData.skills) {
-      const sk = userData.skills as Array<{name: string; level?: number}>;
-      lines.push(`【技能】${sk.map(x => `${x.name}${x.level ? `(Lv${x.level})` : ''}`).join('、')}`);
+      const sk = userData.skills as Array<{name: string; level?: number; description?: string}>;
+      lines.push(`【技能】${sk.map(x => `「${x.name}」${x.level ? `Lv${x.level}` : ''}${x.description ? `(${x.description})` : ''}`).join('；')}`);
     }
     if (userData.jobs) {
-      const j = userData.jobs as Array<{company: string; position: string; status?: string}>;
-      lines.push(`【求职记录】共 ${j.length} 条：${j.map(x => `${x.company} - ${x.position}（${x.status||'进行中'}）`).join('、')}`);
+      const j = userData.jobs as Array<{company: string; position: string; status?: string; notes?: string}>;
+      lines.push(`【求职记录】共 ${j.length} 条：${j.map(x => `「${x.company}·${x.position}」状态：${x.status||'进行中'}${x.notes?`，备注：${x.notes}`:''}`).join('；')}`);
     }
     if (userData.collectionNodes) {
       const c = userData.collectionNodes as Array<{name: string; items: Array<{name: string; price: string}>}>;
-      lines.push(`【收藏分布】${c.map(x => `${x.name}（${x.items.length}项，合计¥${x.items.reduce((s,i)=>s+Number(i.price||0),0).toFixed(2)}）`).join('、')}`);
+      // 包含每个节点下所有条目的详细名称和价格
+      lines.push(`【收藏分布】共 ${c.length} 个节点：\n${c.map(x => {
+        const itemDetail = x.items.length > 0
+          ? x.items.map(i => `    - ${i.name || '(未命名)'}：¥${Number(i.price||0).toFixed(2)}`).join('\n')
+          : '    - (暂无条目)';
+        return `  节点「${x.name}」共 ${x.items.length} 条，合计 ¥${x.items.reduce((s,i)=>s+Number(i.price||0),0).toFixed(2)}：\n${itemDetail}`;
+      }).join('\n')}`);
     }
 
     if (lines.length > 0) {
       userContext = `
 
-【以下是该用户APP内的真实生活记录数据，仅供你作为背景知识参考】：
+【用户的个人生活数据（以下是真实完整数据，请严格基于此内容作答）】：
 ${lines.join('\n')}
 
-【你的回答准则】：
-1. 当用户明确向你询问他的数据（例如问"我的收藏分布有什么"、"我的仪式有哪些"）时，请直接查阅上方的相关数据，并自然地回答用户，不要说"指令已收到"这种机器人的话。
-2. 回答时，必须根据相关数据给出具体内容。例如问"收藏分布有什么"，就告诉他有绘画多少项金额多少，游戏多少项金额多少等，给出贴心的总结。
-3. 如果用户只是在找你闲聊，没有问及这些数据，请不要主动提及这些数据，正常保持人物设定聊天即可。`;
+【数据使用规则 — 极其重要，必须严格遵守】：
+1. 当用户询问某个模块的内容/记录时，你必须直接列出该模块中的具体数据（名称、数字、状态等）。绝对禁止给出空洞的自我介绍或"随时为您服务"之类的废话回应。
+2. 只引用被问到的模块数据，不要把无关模块的数据混入回复。
+3. 若某模块有数据，直接报告；若无数据，明确说"该模块暂无记录"。
+4. 严禁对用户的数据查询请求给出通用/模板式回复。`;
     }
+  } else {
+    userContext = `
+
+【注意】：当前未能获取到用户数据，如被问及具体记录，请说明暂时无法读取数据，建议用户稍后再试。`;
   }
 
   return `你是一个叫做「${bot.name}」的AI助手。${bot.age ? `你的年龄设定是 ${bot.age} 岁。` : ''}${bot.gender ? `性别：${bot.gender}。` : ''}${bot.speakingStyle ? `你的说话方式是：${bot.speakingStyle}。` : ''}${bot.personality ? `人物设定：${bot.personality}。` : ''}${userContext}
 
 【回复格式指令 — 必须严格遵守】：
-1. 你每次的回复必须拆分为至少 3 条独立的简短消息（模仿真人发微信的习惯，不要一次发一大段）。
-2. 在这几条消息之间，使用 \`|||\` 作为分隔符，且分隔符两侧不要有空格或换行。
-例如：好的呀，等我看一下哈|||你的收藏分布里有这些内容哦！|||绘画有16项，游戏有4项，大概是这样~
-请严格遵守以上所有的指令。`;
+1. 每次回复必须拆分为至少 3 条独立的简短消息（模仿真人发微信的习惯）。
+2. 每条消息之间使用 \`|||\` 作为分隔符，分隔符两侧不要有多余空格或换行。
+例如：好的，我来看一下|||【收藏分布】共1个节点「游戏」，包含3条记录|||分别是：设计课程¥299、笔刷¥45、字体¥30，合计¥374
+请严格遵守以上所有指令，不得以任何理由给出通用废话回复。`;
+}
+
 }
 
 
