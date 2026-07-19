@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { MediaTracker } from '../plugins/MediaTrackerPlugin';
 import { useMediaTracker } from '../hooks/useMediaTracker';
+import { useSyncState } from '@/hooks/useSyncState';
 
 export function MediaTrackerSetup() {
   const [hasPermissions, setHasPermissions] = useState(false);
