@@ -61,9 +61,9 @@ export default function CollectionsPage() {
   }, [activeNode, devicePage]);
 
   const getNodeTotal = (items: SubItem[]) =>
-    items.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+    Number(items.reduce((sum, item) => sum + (Number(item.price) || 0), 0).toFixed(2));
 
-  const grandTotal = (nodes || []).reduce((sum, node) => sum + getNodeTotal(node.items), 0);
+  const grandTotal = Number((nodes || []).reduce((sum, node) => sum + getNodeTotal(node.items), 0).toFixed(2));
 
   // ── Base responsive scale (initial fit) ──
   useEffect(() => {

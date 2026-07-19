@@ -31,8 +31,49 @@ interface BotConfig {
 
 const AVATAR_OPTIONS = ['🤖', '🧠', '🦊', '🐼', '🌸', '🐉', '⚡', '🎯', '🌙', '🎨', '🔥', '💧', '🌿', '🦁', '🦉'];
 
-function buildSystemPrompt(bot: BotConfig): string {
-  return `你是一个叫做「${bot.name}」的AI助手。${bot.age ? `你的年龄设定是 ${bot.age} 岁。` : ''}${bot.gender ? `性别：${bot.gender}。` : ''}${bot.speakingStyle ? `你的说话方式是：${bot.speakingStyle}。` : ''}${bot.personality ? `人物设定：${bot.personality}。` : ''}
+function buildSystemPrompt(bot: BotConfig, userData?: Record<string, unknown>): string {
+  let userContext = '';
+  if (userData && Object.keys(userData).length > 0) {
+    const lines: string[] = [];
+
+    if (userData.rituals) {
+      const r = userData.rituals as Array<{name: string; totalDays: number; checkedDates?: string[]}>;
+      lines.push(`【日常仪式】共 ${r.length} 个：${r.map(x => `${x.name}（目标${x.totalDays}天，已打卡${(x.checkedDates||[]).length}天）`).join('、')}`);
+    }
+    if (userData.subscriptions) {
+      const s = userData.subscriptions as Array<{name: string; amount: number|string; cycle: string; expiry?: string}>;
+      lines.push(`【订阅守卫】共 ${s.length} 项：${s.map(x => `${x.name} ${x.amount}元/${x.cycle}${x.expiry ? '（到期${x.expiry}）' : ''}`).join('、')}`);
+    }
+    if (userData.summaryProjects) {
+      const p = userData.summaryProjects as Array<{title: string; tasks?: Array<{done?: boolean}>}>;
+      lines.push(`【成长/待办】共 ${p.length} 个项目：${p.map(x => {
+        const done = (x.tasks||[]).filter((t:{done?:boolean}) => t.done).length;
+        return `${x.title}（${done}/${(x.tasks||[]).length} 完成）`;
+      }).join('、')}`);
+    }
+    if (userData.skills) {
+      const sk = userData.skills as Array<{name: string; level?: number}>;
+      lines.push(`【技能】${sk.map(x => `${x.name}${x.level ? `(Lv${x.level})` : ''}`).join('、')}`);
+    }
+    if (userData.jobs) {
+      const j = userData.jobs as Array<{company: string; position: string; status?: string}>;
+      lines.push(`【求职记录】共 ${j.length} 条：${j.map(x => `${x.company} - ${x.position}（${x.status||'进行中'}）`).join('、')}`);
+    }
+    if (userData.collectionNodes) {
+      const c = userData.collectionNodes as Array<{name: string; items: Array<{name: string; price: string}>}>;
+      lines.push(`【收藏分布】${c.map(x => `${x.name}（${x.items.length}项，合计¥${x.items.reduce((s,i)=>s+Number(i.price||0),0).toFixed(2)}）`).join('、')}`);
+    }
+
+    if (lines.length > 0) {
+      userContext = `
+
+【用户的个人生活数据 — 请据此给出针对性、个性化的建议】：
+${lines.join('\n')}
+请在对话中主动引用这些数据，给出真正有帮助的个性化回应。`;
+    }
+  }
+
+  return `你是一个叫做「${bot.name}」的AI助手。${bot.age ? `你的年龄设定是 ${bot.age} 岁。` : ''}${bot.gender ? `性别：${bot.gender}。` : ''}${bot.speakingStyle ? `你的说话方式是：${bot.speakingStyle}。` : ''}${bot.personality ? `人物设定：${bot.personality}。` : ''}${userContext}
 
 【重要系统指令】：
 1. 为了保持真实感，你每次回复**必须**将其拆分为至少 3 条独立的简短消息（模仿真人发微信的习惯，不要一次发一大段）。
@@ -46,8 +87,18 @@ export function AIChatAgent({ isOpen, onClose }: AIChatAgentProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState<Record<string, unknown>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 启动时拉取用户全部数据，注入到 AI 上下文
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/sync')
+      .then(r => r.json())
+      .then(res => { if (res.data) setUserData(res.data); })
+      .catch(() => {});
+  }, [isOpen]);
 
   // 1. API 配置
   const [apiConfig, setApiConfig] = useState<ApiConfig>(() => {
@@ -150,7 +201,7 @@ export function AIChatAgent({ isOpen, onClose }: AIChatAgentProps) {
         body: JSON.stringify({
           model: apiConfig.model || 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: buildSystemPrompt(activeBot) },
+            { role: 'system', content: buildSystemPrompt(activeBot, userData) },
             ...currentMsgsSnap.map(m => ({ role: m.role, content: m.content })),
           ],
         }),
