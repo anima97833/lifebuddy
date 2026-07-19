@@ -38,6 +38,7 @@
         <!-- 悬浮球 UI 服务 -->
         <service
             android:name=".FloatingBubbleService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
         <!-- 媒体监控前台服务 -->

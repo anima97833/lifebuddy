@@ -320,7 +320,11 @@ export function SkillBoard() {
                           className="bg-surface-container-low border border-outline-variant/20 rounded-lg px-3 py-1.5 text-sm w-20 flex-shrink-0 focus:outline-none focus:border-primary-container text-on-surface placeholder:text-on-surface-variant/40" 
                           title="看课时长" 
                         />
-                        <a href={item.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="p-1.5 rounded-lg bg-primary-container text-white hover:bg-primary transition-colors flex-shrink-0 flex items-center justify-center">
+                        <a href={item.url} onClick={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.open(item.url, '_system');
+                        }} className="p-1.5 rounded-lg bg-primary-container text-white hover:bg-primary transition-colors flex-shrink-0 flex items-center justify-center">
                           <span className="material-symbols-outlined text-[16px]">open_in_new</span>
                         </a>
                       </div>
