@@ -128,6 +128,34 @@ public class FloatingBubbleService extends Service {
 
     @SuppressLint("ClickableViewAccessibility")
     private void setupDragListener() {
+        android.view.GestureDetector gestureDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                if (isPlaying) {
+                    // Stop timer and hide bubble
+                    isPlaying = false;
+                    handler.removeCallbacks(timerRunnable);
+                    floatingView.setVisibility(View.GONE);
+                    
+                    long totalTimeMs = accumulatedTime + (System.currentTimeMillis() - sessionStartTime);
+                    accumulatedTime = 0;
+                    
+                    // Send end session broadcast manually
+                    Intent endIntent = new Intent(MediaWatcherService.ACTION_MEDIA_STATE_CHANGED);
+                    endIntent.putExtra(MediaWatcherService.EXTRA_IS_PLAYING, false);
+                    endIntent.putExtra(MediaWatcherService.EXTRA_TITLE, currentTitle);
+                    endIntent.putExtra("FORCE_END", true); // Optional flag
+                    LocalBroadcastManager.getInstance(FloatingBubbleService.this).sendBroadcast(endIntent);
+                    
+                    // Bring MainActivity to foreground
+                    Intent launchIntent = new Intent(FloatingBubbleService.this, MainActivity.class);
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(launchIntent);
+                }
+                return true;
+            }
+        });
+
         floatingView.findViewById(R.id.bubble_root).setOnTouchListener(new View.OnTouchListener() {
             private int initialX;
             private int initialY;
@@ -136,6 +164,10 @@ public class FloatingBubbleService extends Service {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (gestureDetector.onTouchEvent(event)) {
+                    return true; // Handled by GestureDetector (double tap)
+                }
+                
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         initialX = params.x;
