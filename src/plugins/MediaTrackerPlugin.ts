@@ -1,4 +1,4 @@
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, PluginListenerHandle } from '@capacitor/core';
 
 export interface MediaTrackerPlugin {
   startWatching(): Promise<void>;
@@ -6,6 +6,11 @@ export interface MediaTrackerPlugin {
   checkPermissions(): Promise<{ hasNotificationAccess: boolean; hasOverlayAccess: boolean }>;
   requestNotificationAccess(): Promise<void>;
   requestOverlayAccess(): Promise<void>;
+  getPendingSessions(): Promise<{ sessions: any[] }>;
+  
+  addListener(eventName: 'mediaStateChanged', listenerFunc: (info: { isPlaying: boolean, title: string, packageName: string }) => void): Promise<PluginListenerHandle> & PluginListenerHandle;
+  addListener(eventName: 'sessionStarted', listenerFunc: (info: { isPlaying: boolean, title: string, packageName: string }) => void): Promise<PluginListenerHandle> & PluginListenerHandle;
+  addListener(eventName: 'sessionEnded', listenerFunc: (info: { title: string, packageName: string, durationMs: number, startTime: number }) => void): Promise<PluginListenerHandle> & PluginListenerHandle;
 }
 
 export const MediaTracker = registerPlugin<MediaTrackerPlugin>('MediaTracker');

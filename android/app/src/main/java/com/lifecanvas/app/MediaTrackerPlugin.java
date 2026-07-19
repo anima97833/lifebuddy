@@ -140,6 +140,17 @@ public class MediaTrackerPlugin extends Plugin {
         return listeners != null && listeners.contains(pkgName);
     }
 
+    private org.json.JSONArray pendingSessions = new org.json.JSONArray();
+
+    @PluginMethod
+    public void getPendingSessions(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("sessions", pendingSessions);
+        call.resolve(ret);
+        // Clear them after retrieving
+        pendingSessions = new org.json.JSONArray();
+    }
+
     private void handleMediaStateChange(boolean isPlaying, String title, String packageName) {
         // Send state to JS
         JSObject data = new JSObject();
@@ -166,8 +177,37 @@ public class MediaTrackerPlugin extends Plugin {
                 sessionData.put("packageName", currentPackage);
                 sessionData.put("durationMs", durationMs);
                 sessionData.put("startTime", sessionStartTime);
+                
+                // Cache it natively so we don't lose it while WebView is frozen
+                try {
+                    pendingSessions.put(new org.json.JSONObject(sessionData.toString()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
                 notifyListeners("sessionEnded", sessionData);
             }
+        } else if (isPlaying && wasPlaying && !currentTitle.equals(title)) {
+            // Title changed while playing (switched videos without pausing)
+            long durationMs = System.currentTimeMillis() - sessionStartTime;
+            if (durationMs > 5000) {
+                JSObject sessionData = new JSObject();
+                sessionData.put("title", currentTitle);
+                sessionData.put("packageName", currentPackage);
+                sessionData.put("durationMs", durationMs);
+                sessionData.put("startTime", sessionStartTime);
+                try {
+                    pendingSessions.put(new org.json.JSONObject(sessionData.toString()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                notifyListeners("sessionEnded", sessionData);
+            }
+            // Reset for new video
+            sessionStartTime = System.currentTimeMillis();
+            currentTitle = title;
+            currentPackage = packageName;
+            notifyListeners("sessionStarted", data);
         }
         
         wasPlaying = isPlaying;
