@@ -2,6 +2,27 @@
 
 import React from 'react';
 import { useSyncState } from '@/hooks/useSyncState';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+
+const openExternalLink = async (url: string) => {
+  if (!url) return;
+  
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await Browser.open({ url });
+    } catch (e) {
+      console.error('Failed to open browser', e);
+      window.open(url, '_system');
+    }
+  } else {
+    window.open(url, '_blank');
+  }
+};
 
 interface SkillItem {
   name: string;
@@ -323,7 +344,7 @@ export function SkillBoard() {
                         <a href={item.url} onClick={e => {
                           e.preventDefault();
                           e.stopPropagation();
-                          window.open(item.url, '_system');
+                          openExternalLink(item.url);
                         }} className="p-1.5 rounded-lg bg-primary-container text-white hover:bg-primary transition-colors flex-shrink-0 flex items-center justify-center">
                           <span className="material-symbols-outlined text-[16px]">open_in_new</span>
                         </a>
