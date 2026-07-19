@@ -23,6 +23,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- 深度链接 (Deep Links) & App Links 配置 -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- 支持自定义 scheme (例如 lifecanvas://) -->
+                <data android:scheme="lifecanvas" />
+                <!-- 支持普通 HTTPS 链接 (例如 https://lifecanvas.app) -->
+                <data android:scheme="http" android:host="lifecanvas.app" />
+                <data android:scheme="https" android:host="lifecanvas.app" />
+            </intent-filter>
+
         </activity>
 
         <provider
