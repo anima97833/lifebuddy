@@ -5,6 +5,7 @@ import { useSyncState } from '@/hooks/useSyncState';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { MediaTracker } from '@/plugins/MediaTrackerPlugin';
+import { AppLauncher } from '@capacitor/app-launcher';
 
 const openExternalLink = async (url: string) => {
   if (!url) return;
@@ -16,7 +17,7 @@ const openExternalLink = async (url: string) => {
   if (Capacitor.isNativePlatform()) {
     try {
       if (url.includes('bilibili.com') || url.includes('github.com') || url.includes('zhihu.com') || url.includes('youtube.com')) {
-        await MediaTracker.openUrlNatively({ url });
+        await AppLauncher.openUrl({ url });
       } else {
         await Browser.open({ url });
       }
