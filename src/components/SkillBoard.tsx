@@ -4,6 +4,7 @@ import React from 'react';
 import { useSyncState } from '@/hooks/useSyncState';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import { AppLauncher } from '@capacitor/app-launcher';
 
 const openExternalLink = async (url: string) => {
   if (!url) return;
@@ -14,9 +15,13 @@ const openExternalLink = async (url: string) => {
 
   if (Capacitor.isNativePlatform()) {
     try {
-      await Browser.open({ url });
+      if (url.includes('bilibili.com') || url.includes('github.com') || url.includes('zhihu.com') || url.includes('youtube.com')) {
+        await AppLauncher.openUrl({ url });
+      } else {
+        await Browser.open({ url });
+      }
     } catch (e) {
-      console.error('Failed to open browser', e);
+      console.error('Failed to open link', e);
       window.open(url, '_system');
     }
   } else {
