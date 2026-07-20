@@ -16,13 +16,20 @@ const openExternalLink = async (url: string) => {
 
   if (Capacitor.isNativePlatform()) {
     try {
-      if (url.includes('bilibili.com') || url.includes('github.com') || url.includes('zhihu.com') || url.includes('youtube.com')) {
-        await AppLauncher.openUrl({ url });
+      if (url.includes('bilibili.com/video')) {
+        console.log('🚀 [Test] Using MediaTracker.openUrlNatively:', url);
+        await MediaTracker.openUrlNatively({ url });
+        console.log('✅ [Test] Native Intent fired successfully');
+      } else if (url.includes('bilibili.com') || url.includes('github.com') || url.includes('zhihu.com') || url.includes('youtube.com')) {
+        console.log('🚀 [AppLauncher] Using AppLauncher:', url);
+        const result = await AppLauncher.openUrl({ url });
+        console.log('✅ [AppLauncher] Result:', result);
       } else {
+        console.log('🚀 [Browser] Using Browser.open:', url);
         await Browser.open({ url });
       }
     } catch (e) {
-      console.error('Failed to open link', e);
+      console.error('❌ Failed to open link', e);
       window.open(url, '_system');
     }
   } else {

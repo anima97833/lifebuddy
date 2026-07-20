@@ -7,6 +7,7 @@ export interface MediaTrackerPlugin {
   requestNotificationAccess(): Promise<void>;
   requestOverlayAccess(): Promise<void>;
   getPendingSessions(): Promise<{ sessions: any[] }>;
+  hideFloatingBubble(): Promise<void>;
   openUrlNatively(options: { url: string }): Promise<void>;
   
   addListener(eventName: 'mediaStateChanged', listenerFunc: (info: { isPlaying: boolean, title: string, packageName: string }) => void): Promise<PluginListenerHandle> & PluginListenerHandle;
