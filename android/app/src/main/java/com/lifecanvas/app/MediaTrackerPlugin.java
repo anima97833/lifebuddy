@@ -152,6 +152,23 @@ public class MediaTrackerPlugin extends Plugin {
         pendingSessions = new org.json.JSONArray();
     }
 
+    @PluginMethod
+    public void openUrlNatively(PluginCall call) {
+        String url = call.getString("url");
+        if (url != null) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+                call.resolve();
+            } catch (Exception e) {
+                call.reject("Failed to open URL natively", e);
+            }
+        } else {
+            call.reject("URL is missing");
+        }
+    }
+
     private void handleMediaStateChange(boolean isPlaying, String title, String packageName, boolean forceEnd) {
         // Send state to JS
         JSObject data = new JSObject();
